@@ -79,12 +79,24 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
               <Star className="w-3 h-3 text-[#D4AF37] fill-current" /> PERSEMBAHAN UTAMA <Star className="w-3 h-3 text-[#D4AF37] fill-current" />
             </div>
 
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black font-cinema tracking-wider text-gold-gradient uppercase drop-shadow">
+            {/* Smooth Animated Title */}
+            <motion.h1 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="text-3xl md:text-5xl lg:text-6xl font-black font-cinema tracking-wider text-gold-gradient uppercase animate-gold-shimmer"
+            >
               TOK WAN HASNUL BIN MANSOR
-            </h1>
-            <p className="text-sm md:text-lg font-heading text-[#FAF0D7] italic mt-1">
+            </motion.h1>
+
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-sm md:text-lg font-heading text-[#FAF0D7] italic mt-1"
+            >
               Sambutan Ulang Tahun Ke-64 • <span className="text-[#D4AF37] font-normal font-sans">1 Ogos 2026</span>
-            </p>
+            </motion.p>
           </div>
 
           <div className="text-right flex items-center gap-3 bg-[#241A13] px-4 py-2 rounded-xl border border-[#D4AF37]/40 shadow-inner">
@@ -126,10 +138,10 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
             currentWish && (
               <motion.div 
                 key={`wish-${currentWish.id}`}
-                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                initial={{ opacity: 0, y: 12, scale: 0.99 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.98 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
+                exit={{ opacity: 0, y: -12, scale: 0.99 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 className="w-full relative bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
@@ -199,10 +211,10 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
             currentPhoto && (
               <motion.div 
                 key={`photo-${currentPhoto.id}`}
-                initial={{ opacity: 0, scale: 0.96 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 className="w-full relative bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl p-6 shadow-2xl text-center"
               >
                 <div className="relative max-h-[50vh] rounded-xl overflow-hidden bg-black mb-4 inline-block border-2 border-[#D4AF37]/40">

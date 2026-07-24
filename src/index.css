@@ -10,7 +10,7 @@
   --bg-cinema: #140E0A;
   --bg-card: #261D16;
   --gold-primary: #D4AF37;
-  --gold-metallic: linear-gradient(135deg, #B8860B 0%, #FFD700 30%, #D4AF37 70%, #996515 100%);
+  --gold-metallic: linear-gradient(135deg, #B8860B 0%, #FFD700 35%, #D4AF37 70%, #996515 100%);
   --crimson-accent: #8C1C1C;
   --text-cream: #FAF0D7;
 }
@@ -26,6 +26,7 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* Optimized Film Grain Overlay */
@@ -58,10 +59,28 @@ body {
 .font-heading { font-family: var(--font-heading); }
 .font-typewriter { font-family: var(--font-typewriter); }
 
+/* GPU Hardware-Accelerated Gold Gradient Text */
 .text-gold-gradient {
   background: var(--gold-metallic);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: #D4AF37; /* Fallback for browsers */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Smooth Shimmer Glow Animation for Header Title */
+@keyframes gold-shimmer {
+  0% { filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.2)); }
+  50% { filter: drop-shadow(0 4px 16px rgba(255, 215, 0, 0.45)); }
+  100% { filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.2)); }
+}
+
+.animate-gold-shimmer {
+  will-change: filter;
+  animation: gold-shimmer 4s ease-in-out infinite;
 }
 
 /* Stamp Badge Effect */

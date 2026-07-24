@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Film, Clock, QrCode, MessageSquare, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { Film, Clock, QrCode, MessageSquare, ChevronLeft, ChevronRight, Star, Heart, Camera, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GramophonePlayer from './GramophonePlayer';
 import { getEventPhotos } from '../services/wishService';
@@ -79,7 +79,6 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
               <Star className="w-3 h-3 text-[#D4AF37] fill-current" /> PERSEMBAHAN UTAMA <Star className="w-3 h-3 text-[#D4AF37] fill-current" />
             </div>
 
-            {/* Smooth Animated Title */}
             <motion.h1 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -110,28 +109,28 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
         <div className="mt-6 flex items-center justify-center gap-3">
           <button
             onClick={() => { setDisplayCategory('wishes'); setCurrentIndex(0); }}
-            className={`px-5 py-2 rounded-lg text-xs font-bold font-typewriter transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold font-typewriter transition-all cursor-pointer ${
               displayCategory === 'wishes'
                 ? 'bg-[#D4AF37] text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                 : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
             }`}
           >
-            💌 Slaid Kad Ucapan ({wishes.length})
+            <Mail className="w-3.5 h-3.5" /> Slaid Kad Ucapan ({wishes.length})
           </button>
           <button
             onClick={() => { setDisplayCategory('photos'); setCurrentIndex(0); }}
-            className={`px-5 py-2 rounded-lg text-xs font-bold font-typewriter transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold font-typewriter transition-all cursor-pointer ${
               displayCategory === 'photos'
                 ? 'bg-[#D4AF37] text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                 : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
             }`}
           >
-            📸 Foto Majlis Live ({eventPhotos.length})
+            <Camera className="w-3.5 h-3.5" /> Foto Majlis Live ({eventPhotos.length})
           </button>
         </div>
       </header>
 
-      {/* CENTER: ANIMATED SHOWCASE WITH FRAMER MOTION */}
+      {/* CENTER: SHOWCASE WITH FRAMER MOTION */}
       <main className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full my-4 min-h-[380px]">
         <AnimatePresence mode="wait">
           {displayCategory === 'wishes' ? (
@@ -148,7 +147,7 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
               >
                 <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-[#D4AF37]/30">
                   <span className="stamp-badge">
-                    {currentWish.sticker || '🌟 Seniman Agong Tok Wan'}
+                    {currentWish.sticker ? currentWish.sticker.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() : 'SENIMAN AGONG TOK WAN'}
                   </span>
                   <span className="text-xs text-[#A89578] font-typewriter">
                     KAD UCAPAN #{currentIndex + 1} DARI {wishes.length}
@@ -164,8 +163,8 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
                           alt={currentWish.sender}
                           className="w-56 h-64 object-cover rounded-lg sepia-[0.2]"
                         />
-                        <div className="mt-2 text-center text-[10px] font-typewriter text-[#D4AF37]">
-                          MEMORI BERSAMA TOK WAN 📸
+                        <div className="mt-2 text-center text-[10px] font-typewriter text-[#D4AF37] flex items-center justify-center gap-1">
+                          <Camera className="w-3 h-3" /> MEMORI BERSAMA TOK WAN
                         </div>
                       </div>
                     </div>
@@ -186,8 +185,8 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
                         </p>
                       </div>
 
-                      <div className="text-xs text-[#D4AF37] font-typewriter px-3 py-1 rounded border border-[#D4AF37]/40 bg-[#1A1008]">
-                        SEKeluarga ❤️
+                      <div className="text-xs text-[#D4AF37] font-typewriter px-3 py-1 rounded border border-[#D4AF37]/40 bg-[#1A1008] flex items-center gap-1.5">
+                        <Heart className="w-3.5 h-3.5 text-[#8C1C1C] fill-current" /> SEKELUARGA
                       </div>
                     </div>
                   </div>

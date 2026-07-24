@@ -5,7 +5,7 @@ import TokWanGallery from './components/TokWanGallery';
 import LiveEventPhotos from './components/LiveEventPhotos';
 import VintageCurtain from './components/VintageCurtain';
 import { getStoredWishes, subscribeToWishes } from './services/wishService';
-import { Tv, PenTool, Image as ImageIcon, Camera } from 'lucide-react';
+import { Tv, PenTool, Image as ImageIcon, Camera, ArrowLeft } from 'lucide-react';
 
 export default function App() {
   const [wishes, setWishes] = useState([]);
@@ -33,17 +33,17 @@ export default function App() {
       <div className="film-grain" />
       <div className="vignette-overlay" />
 
-      {/* Floating Top Mode Navigation Switcher */}
+      {/* Top Mode Navigation Switcher */}
       <nav className="fixed top-4 right-4 z-40 flex items-center gap-1.5 bg-[#1A130E]/95 border border-[#D4AF37]/50 rounded-full p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-md overflow-x-auto max-w-[95vw]">
         <button
           onClick={() => setViewMode('tv')}
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
             viewMode === 'tv'
               ? 'bg-gradient-to-r from-[#BF953F] to-[#AA771C] text-[#1A130E] shadow-lg scale-105'
-              : 'text-[#A39274] hover:text-[#F5E6CA]'
+              : 'text-[#A89578] hover:text-[#FAF0D7]'
           }`}
         >
-          <Tv className="w-4 h-4" /> 📺 TV Majlis
+          <Tv className="w-4 h-4 text-[#1A130E]" /> TV Majlis
         </button>
 
         <button
@@ -51,10 +51,10 @@ export default function App() {
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
             viewMode === 'form'
               ? 'bg-gradient-to-r from-[#BF953F] to-[#AA771C] text-[#1A130E] shadow-lg scale-105'
-              : 'text-[#A39274] hover:text-[#F5E6CA]'
+              : 'text-[#A89578] hover:text-[#FAF0D7]'
           }`}
         >
-          <PenTool className="w-4 h-4" /> ✍️ Ucapan
+          <PenTool className="w-4 h-4" /> Ucapan
         </button>
 
         <button
@@ -62,10 +62,10 @@ export default function App() {
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
             viewMode === 'gallery'
               ? 'bg-gradient-to-r from-[#BF953F] to-[#AA771C] text-[#1A130E] shadow-lg scale-105'
-              : 'text-[#A39274] hover:text-[#F5E6CA]'
+              : 'text-[#A89578] hover:text-[#FAF0D7]'
           }`}
         >
-          <ImageIcon className="w-4 h-4" /> 📸 Memori Tok Wan
+          <ImageIcon className="w-4 h-4" /> Memori Tok Wan
         </button>
 
         <button
@@ -73,10 +73,10 @@ export default function App() {
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
             viewMode === 'event-photos'
               ? 'bg-gradient-to-r from-[#BF953F] to-[#AA771C] text-[#1A130E] shadow-lg scale-105'
-              : 'text-[#A39274] hover:text-[#F5E6CA]'
+              : 'text-[#A89578] hover:text-[#FAF0D7]'
           }`}
         >
-          <Camera className="w-4 h-4" /> 🎉 Foto Majlis Live
+          <Camera className="w-4 h-4" /> Foto Majlis Live
         </button>
       </nav>
 
@@ -92,9 +92,9 @@ export default function App() {
         <div className="min-h-screen py-16 px-4 flex flex-col items-center justify-center relative z-20">
           <button
             onClick={() => setViewMode('tv')}
-            className="mb-6 flex items-center gap-2 text-xs font-typewriter text-[#D4AF37] hover:underline"
+            className="mb-6 flex items-center gap-2 text-xs font-typewriter text-[#D4AF37] hover:underline cursor-pointer"
           >
-            ← Kembali Ke Skrin TV Majlis
+            <ArrowLeft className="w-4 h-4" /> Kembali Ke Skrin TV Majlis
           </button>
           <GuestWishForm onWishSubmitted={handleWishSubmitted} />
         </div>

@@ -11,10 +11,10 @@ const INITIAL_WISHES = [
     id: 'sample-1',
     sender: 'Cucu-cucu Comel (Aiman & Sofea)',
     relationship: 'Cucu Kesayangan',
-    message: 'Selamat Hari Jadi Ke-64 Tok Wan Hasnul! Tok Wan handsome macam P. Ramlee zaman Bujang Lapok! Semoga Tok Wan sentiasa sihat, dipanjangkan umur, dan ceria selalu bersama kami semua! ❤️🎬',
+    message: 'Selamat Hari Jadi Ke-64 Tok Wan Hasnul! Tok Wan handsome macam P. Ramlee zaman Bujang Lapok! Semoga Tok Wan sentiasa sihat, dipanjangkan umur, dan ceria selalu bersama kami semua!',
     photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
     timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-    sticker: '🌟 Seniman Agong Tok Wan',
+    sticker: 'SENIMAN AGONG TOK WAN',
     likes: 12
   },
   {
@@ -24,7 +24,7 @@ const INITIAL_WISHES = [
     message: 'Happy 64th Birthday Abah Hasnul! Terima kasih kerana menjadi seorang abah dan Tok Wan yang paling hebat dan penyayang. Lagu P. Ramlee "Getaran Jiwa" sentiasa ingatkan kami pada kasih sayang abah!',
     photo: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=400&q=80',
     timestamp: new Date(Date.now() - 3600000 * 12).toISOString(),
-    sticker: '👑 Tok Wan Paling Best',
+    sticker: 'TOK WAN PALING BEST',
     likes: 9
   },
   {
@@ -34,18 +34,18 @@ const INITIAL_WISHES = [
     message: 'Selamat Hari Jadi Hasnul yang ke-64! "Sedang Daku Asyik Menanti...", moga umur berkah, murah rezeki dan sihat sentiasa. Nanti balik Penang kita pekena Nasi Kandar fest!',
     photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
     timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
-    sticker: '☕ Geng Kopi Vintaj',
+    sticker: 'GENG KOPI VINTAJ',
     likes: 15
   }
 ];
 
-// Preset Memories of Tok Wan Hasnul (Life Timeline Gallery)
+// Preset Memories of Tok Wan Hasnul
 const INITIAL_MEMORIES = [
   {
     id: 'mem-1',
     title: 'Zaman Muda Era 1980-an',
     year: '1982',
-    caption: 'Tok Wan Hasnul di zaman muda bergaya klasik macam bintang filem!',
+    caption: 'Tok Wan Hasnul di zaman muda bergaya klasik macam bintang filem.',
     url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -63,15 +63,15 @@ const INITIAL_MEMORIES = [
     url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80'
   },
   {
-    title: 'Perkhidmatan & Sambutan Cucu Pertama',
+    title: 'Sambutan Cucu Pertama',
     year: '2016',
-    caption: 'Rasmi menjadi Tok Wan kesayangan cucu-cucu!',
+    caption: 'Rasmi menjadi Tok Wan kesayangan cucu-cucu.',
     id: 'mem-4',
     url: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
-// Preset Sample Live Event Photos (Photos taken by guests during celebration)
+// Preset Sample Live Event Photos
 const INITIAL_EVENT_PHOTOS = [
   {
     id: 'evt-1',
@@ -98,7 +98,6 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
-// === WISHES ===
 export const getStoredWishes = () => {
   try {
     const data = localStorage.getItem(STORAGE_WISHES_KEY);
@@ -121,7 +120,7 @@ export const addWish = (wishData) => {
     message: wishData.message,
     photo: wishData.photo || null,
     timestamp: new Date().toISOString(),
-    sticker: wishData.sticker || '🎂 Selamat Hari Jadi',
+    sticker: wishData.sticker || 'SELAMAT HARI JADI',
     likes: 0
   };
 
@@ -137,7 +136,6 @@ export const addWish = (wishData) => {
   return newWish;
 };
 
-// === TOK WAN MEMORIES ===
 export const getTokWanMemories = () => {
   try {
     const data = localStorage.getItem(STORAGE_MEMORIES_KEY);
@@ -151,7 +149,6 @@ export const getTokWanMemories = () => {
   }
 };
 
-// === LIVE EVENT PHOTOS ===
 export const getEventPhotos = () => {
   try {
     const data = localStorage.getItem(STORAGE_PHOTOS_KEY);

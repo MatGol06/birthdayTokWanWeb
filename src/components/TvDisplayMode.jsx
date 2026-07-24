@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Film, Clock, QrCode, MessageSquare, ChevronLeft, ChevronRight, Volume2, Star } from 'lucide-react';
+import { Film, Clock, QrCode, MessageSquare, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import GramophonePlayer from './GramophonePlayer';
 import { getEventPhotos } from '../services/wishService';
 
@@ -57,14 +58,13 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
 
   return (
     <div className="relative min-h-screen w-full flex flex-col justify-between p-4 md:p-8 lg:p-10 bg-[#140E0A] text-[#FAF0D7] selection:bg-[#D4AF37] selection:text-black">
-      {/* Background Vintage Cinema Glow */}
+      {/* Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-[#D4AF37]/5 rounded-full blur-[150px] pointer-events-none" />
 
-      {/* TOP MARQUEE HEADER (Bespoke Cinema Broadsheet) */}
+      {/* TOP MARQUEE HEADER */}
       <header className="relative z-20 max-w-6xl mx-auto w-full mb-6 border-b-2 border-[#D4AF37]/30 pb-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           
-          {/* Left: Film Production Seal */}
           <div className="text-left hidden md:block">
             <span className="text-[11px] font-typewriter text-[#D4AF37] tracking-widest uppercase block">
               PANGGUNG CINEPLEX 1950s
@@ -74,7 +74,6 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
             </span>
           </div>
 
-          {/* Center: Cinema Title */}
           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#241A13] border border-[#D4AF37]/40 text-[#D4AF37] text-[10px] font-typewriter uppercase tracking-widest mb-2">
               <Star className="w-3 h-3 text-[#D4AF37] fill-current" /> PERSEMBAHAN UTAMA <Star className="w-3 h-3 text-[#D4AF37] fill-current" />
@@ -88,7 +87,6 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
             </p>
           </div>
 
-          {/* Right: Countdown Counter */}
           <div className="text-right flex items-center gap-3 bg-[#241A13] px-4 py-2 rounded-xl border border-[#D4AF37]/40 shadow-inner">
             <Clock className="w-4 h-4 text-[#D4AF37] animate-pulse" />
             <div className="font-heading font-bold text-sm md:text-base text-[#FAF0D7]">
@@ -97,7 +95,6 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
           </div>
         </div>
 
-        {/* Category Switcher Tabs */}
         <div className="mt-6 flex items-center justify-center gap-3">
           <button
             onClick={() => { setDisplayCategory('wishes'); setCurrentIndex(0); }}
@@ -122,106 +119,112 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
         </div>
       </header>
 
-      {/* CENTER: ASYMMETRIC POSTER SHOWCASE (Anti-AI-Slop Layout) */}
-      <main className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full my-4">
-        {displayCategory === 'wishes' ? (
-          currentWish ? (
-            <div 
-              className="w-full relative bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden"
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-            >
-              {/* Corner Filigree Brass Rivets */}
-              <div className="absolute top-3 left-3 text-[#D4AF37] text-xs font-typewriter">❖ 1950s</div>
-              <div className="absolute top-3 right-3 text-[#D4AF37] text-xs font-typewriter">❖ EDISI VINTAJ</div>
+      {/* CENTER: ANIMATED SHOWCASE WITH FRAMER MOTION */}
+      <main className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full my-4 min-h-[380px]">
+        <AnimatePresence mode="wait">
+          {displayCategory === 'wishes' ? (
+            currentWish && (
+              <motion.div 
+                key={`wish-${currentWish.id}`}
+                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="w-full relative bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+              >
+                <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-[#D4AF37]/30">
+                  <span className="stamp-badge">
+                    {currentWish.sticker || '🌟 Seniman Agong Tok Wan'}
+                  </span>
+                  <span className="text-xs text-[#A89578] font-typewriter">
+                    KAD UCAPAN #{currentIndex + 1} DARI {wishes.length}
+                  </span>
+                </div>
 
-              {/* Stamp Badge */}
-              <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-[#D4AF37]/30">
-                <span className="stamp-badge">
-                  {currentWish.sticker || '🌟 Seniman Agong Tok Wan'}
-                </span>
-                <span className="text-xs text-[#A89578] font-typewriter">
-                  KAD UCAPAN #{currentIndex + 1} DARI {wishes.length}
-                </span>
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                  {currentWish.photo ? (
+                    <div className="md:col-span-5 flex justify-center">
+                      <div className="relative p-2 rounded-xl bg-[#1A1008] border-2 border-[#D4AF37] shadow-2xl">
+                        <img 
+                          src={currentWish.photo} 
+                          alt={currentWish.sender}
+                          className="w-56 h-64 object-cover rounded-lg sepia-[0.2]"
+                        />
+                        <div className="mt-2 text-center text-[10px] font-typewriter text-[#D4AF37]">
+                          MEMORI BERSAMA TOK WAN 📸
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
-              {/* Asymmetric Grid: Photo Poster on Left, Lettercard on Right */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                {currentWish.photo ? (
-                  <div className="md:col-span-5 flex justify-center">
-                    <div className="relative p-2 rounded-xl bg-[#1A1008] border-2 border-[#D4AF37] shadow-2xl film-sprocket-border">
-                      <img 
-                        src={currentWish.photo} 
-                        alt={currentWish.sender}
-                        className="w-56 h-64 object-cover rounded-lg sepia-[0.25] contrast-105"
-                      />
-                      <div className="mt-2 text-center text-[10px] font-typewriter text-[#D4AF37]">
-                        MEMORI BERSAMA TOK WAN 📸
+                  <div className={currentWish.photo ? "md:col-span-7 text-left" : "md:col-span-12 text-center max-w-2xl mx-auto"}>
+                    <blockquote className="text-lg md:text-2xl font-heading text-[#FAF0D7] leading-relaxed italic mb-6">
+                      "{currentWish.message}"
+                    </blockquote>
+
+                    <div className="pt-4 border-t border-[#D4AF37]/20 flex items-center justify-between flex-wrap gap-4">
+                      <div>
+                        <h3 className="text-2xl font-bold font-cinema text-gold-gradient">
+                          {currentWish.sender}
+                        </h3>
+                        <p className="text-xs text-[#A89578] font-typewriter mt-0.5">
+                          {currentWish.relationship}
+                        </p>
+                      </div>
+
+                      <div className="text-xs text-[#D4AF37] font-typewriter px-3 py-1 rounded border border-[#D4AF37]/40 bg-[#1A1008]">
+                        SEKeluarga ❤️
                       </div>
                     </div>
                   </div>
-                ) : null}
-
-                <div className={currentWish.photo ? "md:col-span-7 text-left" : "md:col-span-12 text-center max-w-2xl mx-auto"}>
-                  <blockquote className="text-lg md:text-2xl font-heading text-[#FAF0D7] leading-relaxed italic mb-6">
-                    "{currentWish.message}"
-                  </blockquote>
-
-                  <div className="pt-4 border-t border-[#D4AF37]/20 flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                      <h3 className="text-2xl font-bold font-cinema text-gold-gradient">
-                        {currentWish.sender}
-                      </h3>
-                      <p className="text-xs text-[#A89578] font-typewriter mt-0.5">
-                        {currentWish.relationship}
-                      </p>
-                    </div>
-
-                    <div className="text-xs text-[#D4AF37] font-typewriter px-3 py-1 rounded border border-[#D4AF37]/40 bg-[#1A1008]">
-                      SEKeluarga ❤️
-                    </div>
-                  </div>
                 </div>
-              </div>
 
-              {/* Navigation Arrow Controls */}
-              <button
-                onClick={() => setCurrentIndex((prev) => (prev - 1 + wishes.length) % wishes.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
+                <button
+                  onClick={() => setCurrentIndex((prev) => (prev - 1 + wishes.length) % wishes.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setCurrentIndex((prev) => (prev + 1) % wishes.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </motion.div>
+            )
+          ) : (
+            currentPhoto && (
+              <motion.div 
+                key={`photo-${currentPhoto.id}`}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="w-full relative bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl p-6 shadow-2xl text-center"
               >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setCurrentIndex((prev) => (prev + 1) % wishes.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          ) : null
-        ) : (
-          /* EVENT PHOTOS SLIDESHOW */
-          currentPhoto ? (
-            <div className="w-full relative bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl p-6 shadow-2xl text-center">
-              <div className="relative max-h-[50vh] rounded-xl overflow-hidden bg-black mb-4 inline-block border-2 border-[#D4AF37]/40">
-                <img 
-                  src={currentPhoto.url} 
-                  alt={currentPhoto.caption}
-                  className="max-h-[50vh] w-auto object-contain rounded-lg"
-                />
-              </div>
-              <h3 className="text-xl font-bold font-heading text-[#FAF0D7]">
-                "{currentPhoto.caption}"
-              </h3>
-              <p className="text-xs text-[#D4AF37] font-typewriter mt-1">
-                FOTO MAJLIS LIVE OLEH: {currentPhoto.uploader}
-              </p>
-            </div>
-          ) : null
-        )}
+                <div className="relative max-h-[50vh] rounded-xl overflow-hidden bg-black mb-4 inline-block border-2 border-[#D4AF37]/40">
+                  <img 
+                    src={currentPhoto.url} 
+                    alt={currentPhoto.caption}
+                    className="max-h-[50vh] w-auto object-contain rounded-lg"
+                  />
+                </div>
+                <h3 className="text-xl font-bold font-heading text-[#FAF0D7]">
+                  "{currentPhoto.caption}"
+                </h3>
+                <p className="text-xs text-[#D4AF37] font-typewriter mt-1">
+                  FOTO MAJLIS LIVE OLEH: {currentPhoto.uploader}
+                </p>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
       </main>
 
-      {/* FOOTER CONTROLS & GRAMOPHONE */}
+      {/* FOOTER CONTROLS */}
       <footer className="relative z-30 max-w-6xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-[#D4AF37]/30">
         <GramophonePlayer />
 
@@ -255,9 +258,6 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
             <h3 className="text-2xl font-bold font-cinema text-gold-gradient mb-2">
               Imbas QR Code
             </h3>
-            <p className="text-xs text-[#A89578] font-typewriter mb-4">
-              Imbas dengan kamera telefon untuk menghantar ucapan & gambar majlis!
-            </p>
             <div className="bg-white p-4 rounded-xl inline-block shadow-2xl mb-4 border-2 border-[#D4AF37]">
               <QRCodeSVG value={currentUrl} size={200} />
             </div>

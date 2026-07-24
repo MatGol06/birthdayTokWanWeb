@@ -1,32 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Special+Elite&display=swap');
 @import "tailwindcss";
 
-/* ==========================================================================
-   HALLMARK DESIGN SYSTEM — P. RAMLEE VINTAGE CINEMA (1950s-1960s)
-   Refuses AI-slop defaults: No generic cards, no purple gradients, 
-   no universal hover scales, no centered 3-column grids.
-   ========================================================================== */
-
 :root {
   --font-cinema: 'Cinzel Decorative', 'Playfair Display', serif;
   --font-heading: 'Playfair Display', Georgia, serif;
   --font-typewriter: 'Special Elite', monospace;
   --font-sans: 'Plus Jakarta Sans', sans-serif;
 
-  /* OKLCH Tinted Palette — Rich Dark Sepia & Brass Gold */
   --bg-cinema: #140E0A;
-  --bg-stage: #1D1510;
   --bg-card: #261D16;
-  --bg-paper: #F5E6CA;
-  
   --gold-primary: #D4AF37;
   --gold-metallic: linear-gradient(135deg, #B8860B 0%, #FFD700 30%, #D4AF37 70%, #996515 100%);
   --crimson-accent: #8C1C1C;
-
   --text-cream: #FAF0D7;
-  --text-gold: #F3E5AB;
-  --text-muted: #A89578;
-  --text-ink: #1C130B;
 }
 
 * {
@@ -42,7 +28,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Film Grain Texture Overlay */
+/* Optimized Film Grain Overlay */
 .film-grain {
   position: fixed;
   top: 0;
@@ -51,11 +37,11 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 999;
-  opacity: 0.07;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Vignette Dark Rim */
+/* Cinema Vignette Overlay */
 .vignette-overlay {
   position: fixed;
   top: 0;
@@ -64,7 +50,7 @@ body {
   bottom: 0;
   pointer-events: none;
   z-index: 998;
-  background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.85) 100%);
+  background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.85) 100%);
 }
 
 /* Typography Utilities */
@@ -78,80 +64,30 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Handcrafted Brass Frame & Paper Aesthetics */
-.brass-border {
-  border: 2px solid #D4AF37;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(212, 175, 55, 0.2);
-}
-
-.vintage-ticket {
-  background-color: #241A13;
-  border: 2px dashed #D4AF37;
-  position: relative;
-}
-
-.vintage-ticket::before, .vintage-ticket::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 16px;
-  height: 16px;
-  background-color: #140E0A;
-  border-radius: 50%;
-  transform: translateY(-50%);
-}
-
-.vintage-ticket::before { left: -9px; border-right: 2px solid #D4AF37; }
-.vintage-ticket::after { right: -9px; border-left: 2px solid #D4AF37; }
-
-/* Film Sprocket Perforations (Real Film Strip Side Holes) */
-.film-sprocket-border {
-  position: relative;
-}
-.film-sprocket-border::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 6px;
-  width: 8px;
-  background: repeating-linear-gradient(to bottom, transparent, transparent 8px, #140E0A 8px, #140E0A 16px);
-  z-index: 10;
-}
-.film-sprocket-border::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 6px;
-  width: 8px;
-  background: repeating-linear-gradient(to bottom, transparent, transparent 8px, #140E0A 8px, #140E0A 16px);
-  z-index: 10;
-}
-
 /* Stamp Badge Effect */
 .stamp-badge {
   display: inline-block;
   padding: 4px 12px;
   border: 2px solid #8C1C1C;
-  color: #F5E6CA;
+  color: #FAF0D7;
   font-family: var(--font-typewriter);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
-  transform: rotate(-3deg);
-  background-color: rgba(140, 28, 28, 0.2);
+  transform: rotate(-2deg);
+  background-color: rgba(140, 28, 28, 0.25);
   box-shadow: 0 0 10px rgba(140, 28, 28, 0.3);
 }
 
-/* Vinyl Spin */
+/* GPU Accelerated Smooth Vinyl Spin */
 @keyframes spin-vinyl {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .spinning-vinyl {
-  animation: spin-vinyl 14s linear infinite;
+  will-change: transform;
+  animation: spin-vinyl 16s linear infinite;
 }
 
 .spinning-vinyl-paused {

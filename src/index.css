@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Special+Elite&display=swap');
+@import "tailwindcss";
 
 :root {
   --font-cinema: 'Cinzel Decorative', 'Playfair Display', serif;
@@ -22,8 +23,6 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 body {
@@ -98,18 +97,6 @@ body {
 
 .spinning-vinyl-paused {
   animation-play-state: paused;
-}
-
-/* Ticker Scroll Animation */
-@keyframes ticker {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
-}
-
-.animate-ticker {
-  display: inline-block;
-  white-space: nowrap;
-  animation: ticker 35s linear infinite;
 }
 
 /* Custom Scrollbar */

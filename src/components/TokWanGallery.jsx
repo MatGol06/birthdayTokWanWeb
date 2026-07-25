@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Calendar, Film, Sparkles, X, Heart, Eye } from 'lucide-react';
+import { Camera, Calendar, Film, Sparkles, X, Heart, Eye, Image as ImageIcon } from 'lucide-react';
 import { getTokWanMemories } from '../services/wishService';
 
 export default function TokWanGallery() {
@@ -21,48 +21,60 @@ export default function TokWanGallery() {
         </p>
       </div>
 
-      {/* Gallery Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {memories.map((mem) => (
-          <div
-            key={mem.id}
-            onClick={() => setActivePhoto(mem)}
-            className="group relative bg-[#241A13] border-2 border-[#D4AF37]/50 rounded-xl p-3 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-[#D4AF37] cursor-pointer overflow-hidden"
-          >
-            <div className="flex items-center justify-between px-2 mb-2">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-[#D4AF37]/40" />
-                <div className="w-2 h-2 rounded-full bg-[#D4AF37]/40" />
-              </div>
-              <span className="text-[10px] font-typewriter text-[#D4AF37] flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-[#D4AF37]" /> {mem.year}
-              </span>
-            </div>
-
-            <div className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30">
-              <img
-                src={mem.url}
-                alt={mem.title}
-                className="w-full h-full object-cover sepia-[0.2] group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                <span className="text-xs text-[#FAF0D7] font-semibold flex items-center gap-1 font-typewriter">
-                  <Eye className="w-3.5 h-3.5 text-[#D4AF37]" /> Lihat Gambar Penuh
+      {/* Gallery Grid or Empty State */}
+      {memories.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {memories.map((mem) => (
+            <div
+              key={mem.id}
+              onClick={() => setActivePhoto(mem)}
+              className="group relative bg-[#241A13] border-2 border-[#D4AF37]/50 rounded-xl p-3 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-[#D4AF37] cursor-pointer overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-2 mb-2">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-[#D4AF37]/40" />
+                  <div className="w-2 h-2 rounded-full bg-[#D4AF37]/40" />
+                </div>
+                <span className="text-[10px] font-typewriter text-[#D4AF37] flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-[#D4AF37]" /> {mem.year}
                 </span>
               </div>
-            </div>
 
-            <div className="px-1">
-              <h3 className="text-base font-bold font-heading text-[#FAF0D7] group-hover:text-[#D4AF37] transition-colors line-clamp-1">
-                {mem.title}
-              </h3>
-              <p className="text-xs text-[#A89578] font-sans mt-1 line-clamp-2">
-                {mem.caption}
-              </p>
+              <div className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30">
+                <img
+                  src={mem.url}
+                  alt={mem.title}
+                  className="w-full h-full object-cover sepia-[0.2] group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                  <span className="text-xs text-[#FAF0D7] font-semibold flex items-center gap-1 font-typewriter">
+                    <Eye className="w-3.5 h-3.5 text-[#D4AF37]" /> Lihat Gambar Penuh
+                  </span>
+                </div>
+              </div>
+
+              <div className="px-1">
+                <h3 className="text-base font-bold font-heading text-[#FAF0D7] group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                  {mem.title}
+                </h3>
+                <p className="text-xs text-[#A89578] font-sans mt-1 line-clamp-2">
+                  {mem.caption}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 px-4 bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-2xl max-w-lg mx-auto">
+          <ImageIcon className="w-12 h-12 text-[#D4AF37] mx-auto mb-3 opacity-60" />
+          <h3 className="text-xl font-bold font-cinema text-gold-gradient mb-1">
+            GALERI MASIH KOSONG
+          </h3>
+          <p className="text-xs text-[#A89578] font-typewriter">
+            Album memori sejarah Tok Wan akan dikemaskini secara berperingkat.
+          </p>
+        </div>
+      )}
 
       {/* FULLSCREEN IMAGE MODAL */}
       {activePhoto && (

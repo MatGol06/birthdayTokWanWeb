@@ -134,7 +134,7 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
       <main className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto w-full my-2 min-h-[340px]">
         <AnimatePresence mode="wait">
           {displayCategory === 'wishes' ? (
-            currentWish && (
+            currentWish ? (
               <motion.div 
                 key={`wish-${currentWish.id}`}
                 initial={{ opacity: 0, y: 12, scale: 0.99 }}
@@ -205,9 +205,26 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </motion.div>
+            ) : (
+              /* EMPTY STATE FOR WISHES */
+              <div className="w-full text-center p-8 sm:p-12 bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl shadow-2xl">
+                <Mail className="w-12 h-12 text-[#D4AF37] mx-auto mb-3 animate-pulse" />
+                <h3 className="text-xl sm:text-2xl font-bold font-cinema text-gold-gradient mb-2">
+                  BELUM ADA KAD UCAPAN
+                </h3>
+                <p className="text-xs sm:text-sm text-[#A89578] font-typewriter max-w-md mx-auto mb-6">
+                  Imbas QR Code di bawah atau tekan butang 'Hantar Ucapan Baharu' untuk menjadi tetamu pertama yang menghantar ucapan!
+                </p>
+                <button
+                  onClick={onOpenForm}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-xs uppercase tracking-wider shadow-xl hover:brightness-110 font-heading cursor-pointer"
+                >
+                  Hantar Ucapan Pertama
+                </button>
+              </div>
             )
           ) : (
-            currentPhoto && (
+            currentPhoto ? (
               <motion.div 
                 key={`photo-${currentPhoto.id}`}
                 initial={{ opacity: 0, scale: 0.98 }}
@@ -230,6 +247,17 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
                   FOTO MAJLIS LIVE OLEH: {currentPhoto.uploader}
                 </p>
               </motion.div>
+            ) : (
+              /* EMPTY STATE FOR EVENT PHOTOS */
+              <div className="w-full text-center p-8 sm:p-12 bg-[#261D16] border-2 border-[#D4AF37] rounded-2xl shadow-2xl">
+                <Camera className="w-12 h-12 text-[#D4AF37] mx-auto mb-3 animate-pulse" />
+                <h3 className="text-xl sm:text-2xl font-bold font-cinema text-gold-gradient mb-2">
+                  BELUM ADA FOTO MAJLIS LIVE
+                </h3>
+                <p className="text-xs sm:text-sm text-[#A89578] font-typewriter max-w-md mx-auto">
+                  Ambil atau muat naik foto suasana majlis dari telefon anda untuk menayangkannya di skrin TV!
+                </p>
+              </div>
             )
           )}
         </AnimatePresence>

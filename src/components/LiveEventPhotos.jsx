@@ -147,32 +147,44 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
         </form>
       )}
 
-      {/* LIVE EVENT PHOTO GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {photos.map((pt) => (
-          <div
-            key={pt.id}
-            className="bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-xl p-3 shadow-xl hover:border-[#D4AF37] transition-all overflow-hidden"
-          >
-            <div className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30">
-              <img
-                src={pt.url}
-                alt={pt.caption}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <div className="px-1">
-              <p className="text-sm font-bold font-heading text-[#FAF0D7] line-clamp-2">
-                "{pt.caption}"
-              </p>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs text-[#A89578] font-typewriter">
-                <span>Oleh: <strong className="text-[#D4AF37]">{pt.uploader}</strong></span>
-                <span>{new Date(pt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      {/* LIVE EVENT PHOTO GRID OR EMPTY STATE */}
+      {photos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {photos.map((pt) => (
+            <div
+              key={pt.id}
+              className="bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-xl p-3 shadow-xl hover:border-[#D4AF37] transition-all overflow-hidden"
+            >
+              <div className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30">
+                <img
+                  src={pt.url}
+                  alt={pt.caption}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div className="px-1">
+                <p className="text-sm font-bold font-heading text-[#FAF0D7] line-clamp-2">
+                  "{pt.caption}"
+                </p>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs text-[#A89578] font-typewriter">
+                  <span>Oleh: <strong className="text-[#D4AF37]">{pt.uploader}</strong></span>
+                  <span>{new Date(pt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 px-4 bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-2xl max-w-lg mx-auto">
+          <Camera className="w-12 h-12 text-[#D4AF37] mx-auto mb-3 opacity-60 animate-pulse" />
+          <h3 className="text-xl font-bold font-cinema text-gold-gradient mb-1">
+            BELUM ADA FOTO MAJLIS LIVE
+          </h3>
+          <p className="text-xs text-[#A89578] font-typewriter">
+            Jadilah orang pertama yang memuat naik foto kenangan suasana majlis Tok Wan!
+          </p>
+        </div>
+      )}
     </div>
   );
 }

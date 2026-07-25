@@ -1,4 +1,12 @@
-// Wish & Event Photo Management Service with LocalStorage & BroadcastChannel Live Sync
+import { db, isFirebaseConfigured } from './firebase';
+import { 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
 const STORAGE_WISHES_KEY = 'tokwan_hasnul_wishes_v1';
 const STORAGE_PHOTOS_KEY = 'tokwan_hasnul_event_photos_v1';
@@ -8,7 +16,6 @@ const CHANNEL_NAME = 'tokwan_wishes_channel';
 // Clean SVG Placeholder with white background and "EXAMPLE" text
 const EXAMPLE_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23FFFFFF'/%3E%3Crect x='12' y='12' width='576' height='376' fill='none' stroke='%23D4AF37' stroke-width='4' stroke-dasharray='8 8'/%3E%3Ctext x='50%25' y='46%25' font-family='monospace' font-size='36' font-weight='bold' fill='%23222222' text-anchor='middle' dominant-baseline='middle'%3EEXAMPLE%3C/text%3E%3Ctext x='50%25' y='60%25' font-family='sans-serif' font-size='16' fill='%23777777' text-anchor='middle' dominant-baseline='middle'%3E[Muat Naik Foto Sebenar Di Sini]%3C/text%3E%3C/svg%3E";
 
-// Preset sample wishes celebrating Tok Wan Hasnul's 64th Birthday
 const INITIAL_WISHES = [
   {
     id: 'sample-1',
@@ -42,7 +49,6 @@ const INITIAL_WISHES = [
   }
 ];
 
-// Preset Memories of Tok Wan Hasnul
 const INITIAL_MEMORIES = [
   {
     id: 'mem-1',
@@ -52,29 +58,28 @@ const INITIAL_MEMORIES = [
     url: EXAMPLE_PLACEHOLDER
   },
   {
+    id: 'mem-2',
     title: 'Hari Persandingan Tok Wan & Tok',
     year: '1986',
     caption: 'Momen manis Tok Wan Hasnul & Nenek.',
-    id: 'mem-2',
     url: EXAMPLE_PLACEHOLDER
   },
   {
+    id: 'mem-3',
     title: 'Hari Graduasi Anak Pertama',
     year: '2008',
     caption: 'Momen kejayaan anak-anak.',
-    id: 'mem-3',
     url: EXAMPLE_PLACEHOLDER
   },
   {
+    id: 'mem-4',
     title: 'Sambutan Cucu Pertama',
     year: '2016',
     caption: 'Tok Wan bersama cucu-cucu.',
-    id: 'mem-4',
     url: EXAMPLE_PLACEHOLDER
   }
 ];
 
-// Preset Sample Live Event Photos
 const INITIAL_EVENT_PHOTOS = [
   {
     id: 'evt-1',
@@ -101,6 +106,7 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
+// === WISHES ===
 export const getStoredWishes = () => {
   try {
     const data = localStorage.getItem(STORAGE_WISHES_KEY);
@@ -109,39 +115,52 @@ export const getStoredWishes = () => {
       return INITIAL_WISHES;
     }
     const parsed = JSON.parse(data);
-    // Overwrite any old unsplash images with placeholder if needed
-    const cleaned = parsed.map(w => w.photo && w.photo.includes('unsplash') ? { ...w, photo: EXAMPLE_PLACEHOLDER } : w);
-    return cleaned;
+    return parsed.map(w => w.photo && w.photo.includes('unsplash') ? { ...w, photo: EXAMPLE_PLACEHOLDER } : w);
   } catch (err) {
     return INITIAL_WISHES;
   }
 };
 
-export const addWish = (wishData) => {
-  const wishes = getStoredWishes();
+export const addWish = async (wishData) => {
   const newWish = {
-    id: 'wish-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
     sender: wishData.sender || 'Tetamu Jemputan',
     relationship: wishData.relationship || 'Ahli Keluarga',
     message: wishData.message,
     photo: wishData.photo || null,
-    timestamp: new Date().toISOString(),
     sticker: wishData.sticker || 'SELAMAT HARI JADI',
+    timestamp: new Date().toISOString(),
     likes: 0
   };
 
-  const updatedWishes = [newWish, ...wishes];
+  // 1. Add to Firebase Firestore if configured
+  if (isFirebaseConfigured()) {
+    try {
+      await addDoc(collection(db, 'wishes'), {
+        ...newWish,
+        createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Firebase error adding wish:', err);
+    }
+  }
+
+  // 2. Add to LocalStorage fallback
+  const wishes = getStoredWishes();
+  const wishWithId = { ...newWish, id: 'wish-' + Date.now() };
+  const updatedWishes = [wishWithId, ...wishes];
   try {
     localStorage.setItem(STORAGE_WISHES_KEY, JSON.stringify(updatedWishes));
     if (broadcastChannel) {
-      broadcastChannel.postMessage({ type: 'NEW_WISH', wish: newWish, allWishes: updatedWishes });
+      broadcastChannel.postMessage({ type: 'NEW_WISH', wish: wishWithId, allWishes: updatedWishes });
     }
   } catch (err) {
-    console.error('Failed to save wish:', err);
+    console.error('Failed to save local wish:', err);
   }
-  return newWish;
+
+  return wishWithId;
 };
 
+// === TOK WAN MEMORIES ===
 export const getTokWanMemories = () => {
   try {
     const data = localStorage.getItem(STORAGE_MEMORIES_KEY);
@@ -156,6 +175,7 @@ export const getTokWanMemories = () => {
   }
 };
 
+// === LIVE EVENT PHOTOS ===
 export const getEventPhotos = () => {
   try {
     const data = localStorage.getItem(STORAGE_PHOTOS_KEY);
@@ -170,29 +190,69 @@ export const getEventPhotos = () => {
   }
 };
 
-export const addEventPhoto = (photoData) => {
-  const photos = getEventPhotos();
+export const addEventPhoto = async (photoData) => {
   const newPhoto = {
-    id: 'evt-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
     uploader: photoData.uploader || 'Tetamu Majlis',
     caption: photoData.caption || 'Koleksi Gambar Majlis Tok Wan',
     url: photoData.url,
     timestamp: new Date().toISOString()
   };
 
-  const updatedPhotos = [newPhoto, ...photos];
+  // 1. Add to Firebase Firestore if configured
+  if (isFirebaseConfigured()) {
+    try {
+      await addDoc(collection(db, 'event_photos'), {
+        ...newPhoto,
+        createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error('Firebase error adding photo:', err);
+    }
+  }
+
+  // 2. Add to LocalStorage fallback
+  const photos = getEventPhotos();
+  const photoWithId = { ...newPhoto, id: 'evt-' + Date.now() };
+  const updatedPhotos = [photoWithId, ...photos];
   try {
     localStorage.setItem(STORAGE_PHOTOS_KEY, JSON.stringify(updatedPhotos));
     if (broadcastChannel) {
-      broadcastChannel.postMessage({ type: 'NEW_EVENT_PHOTO', photo: newPhoto, allPhotos: updatedPhotos });
+      broadcastChannel.postMessage({ type: 'NEW_EVENT_PHOTO', photo: photoWithId, allPhotos: updatedPhotos });
     }
   } catch (err) {
-    console.error('Failed to save event photo:', err);
+    console.error('Failed to save local event photo:', err);
   }
-  return newPhoto;
+
+  return photoWithId;
 };
 
+// === REALTIME SUBSCRIBER ===
 export const subscribeToWishes = (callback) => {
+  // If Firebase is configured, listen via Firestore Realtime
+  if (isFirebaseConfigured()) {
+    const qWishes = query(collection(db, 'wishes'), orderBy('createdAt', 'desc'));
+    const unsubWishes = onSnapshot(qWishes, (snapshot) => {
+      const liveWishes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (liveWishes.length > 0) {
+        callback(liveWishes, 'wishes');
+      }
+    });
+
+    const qPhotos = query(collection(db, 'event_photos'), orderBy('createdAt', 'desc'));
+    const unsubPhotos = onSnapshot(qPhotos, (snapshot) => {
+      const livePhotos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (livePhotos.length > 0) {
+        callback(livePhotos, 'photos');
+      }
+    });
+
+    return () => {
+      unsubWishes();
+      unsubPhotos();
+    };
+  }
+
+  // Fallback to BroadcastChannel & LocalStorage
   if (!broadcastChannel) return () => {};
 
   const handleMessage = (event) => {

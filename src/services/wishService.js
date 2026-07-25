@@ -8,12 +8,22 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 
-const STORAGE_WISHES_KEY = 'tokwan_hasnul_wishes_v1';
-const STORAGE_PHOTOS_KEY = 'tokwan_hasnul_event_photos_v1';
-const STORAGE_MEMORIES_KEY = 'tokwan_hasnul_memories_v1';
-const CHANNEL_NAME = 'tokwan_wishes_channel';
+// Version 2 Storage Keys (Clears any old cached dummy items in browser localStorage)
+const STORAGE_WISHES_KEY = 'tokwan_hasnul_wishes_v2';
+const STORAGE_PHOTOS_KEY = 'tokwan_hasnul_event_photos_v2';
+const STORAGE_MEMORIES_KEY = 'tokwan_hasnul_memories_v2';
+const CHANNEL_NAME = 'tokwan_wishes_channel_v2';
 
-// Empty Initial Arrays (No Dummy Data)
+// Ensure old cached v1 dummy data is purged on load
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    localStorage.removeItem('tokwan_hasnul_wishes_v1');
+    localStorage.removeItem('tokwan_hasnul_event_photos_v1');
+    localStorage.removeItem('tokwan_hasnul_memories_v1');
+  } catch (e) {}
+}
+
+// Strictly Empty Initial Arrays
 const INITIAL_WISHES = [];
 const INITIAL_MEMORIES = [];
 const INITIAL_EVENT_PHOTOS = [];
@@ -92,6 +102,22 @@ export const getTokWanMemories = () => {
   }
 };
 
+export const addTokWanMemory = (memoryData) => {
+  const memories = getTokWanMemories();
+  const newMem = {
+    id: 'mem-' + Date.now(),
+    title: memoryData.title || 'Memori Tok Wan',
+    year: memoryData.year || '2026',
+    caption: memoryData.caption || '',
+    url: memoryData.url
+  };
+  const updated = [newMem, ...memories];
+  try {
+    localStorage.setItem(STORAGE_MEMORIES_KEY, JSON.stringify(updated));
+  } catch (e) {}
+  return newMem;
+};
+
 // === LIVE EVENT PHOTOS ===
 export const getEventPhotos = () => {
   try {
@@ -140,15 +166,7 @@ export const addEventPhoto = async (photoData) => {
   return photoWithId;
 };
 
-// Clear localStorage items to remove previous local dummy data
-export const resetLocalData = () => {
-  try {
-    localStorage.removeItem(STORAGE_WISHES_KEY);
-    localStorage.removeItem(STORAGE_PHOTOS_KEY);
-    localStorage.removeItem(STORAGE_MEMORIES_KEY);
-  } catch (e) {}
-};
-
+// Realtime Subscriber
 export const subscribeToWishes = (callback) => {
   if (isFirebaseConfigured()) {
     const qWishes = query(collection(db, 'wishes'), orderBy('createdAt', 'desc'));

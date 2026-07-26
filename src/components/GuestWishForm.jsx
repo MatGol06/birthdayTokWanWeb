@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Heart, Camera, CheckCircle2, Film, User, MessageSquareQuote } from 'lucide-react';
+import { Send, Heart, Camera, CheckCircle2, Film, User, MessageSquareQuote, Users } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { addWish } from '../services/wishService';
 
@@ -9,12 +9,14 @@ const RELATIONSHIPS = [
   'Menantu',
   'Adik Beradik',
   'Sahabat Karab',
-  'Jiran & Tetamu'
+  'Jiran & Tetamu',
+  'Lain-lain (Tulis Sendiri)'
 ];
 
 export default function GuestWishForm({ onWishSubmitted }) {
   const [sender, setSender] = useState('');
   const [relationship, setRelationship] = useState(RELATIONSHIPS[0]);
+  const [customRelationship, setCustomRelationship] = useState('');
   const [message, setMessage] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -47,6 +49,11 @@ export default function GuestWishForm({ onWishSubmitted }) {
     setErrorMessage('');
     if (!message.trim() || isSubmitting) return;
 
+    // Determine final relationship text
+    const finalRelationship = relationship === 'Lain-lain (Tulis Sendiri)'
+      ? (customRelationship.trim() || 'Tetamu Jemputan')
+      : relationship;
+
     const lastSubmission = localStorage.getItem('last_wish_submission_time');
     const now = Date.now();
     if (lastSubmission && now - parseInt(lastSubmission) < 30000) {
@@ -59,7 +66,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
     try {
       const newWish = await addWish({
         sender: sender.trim() || 'Tetamu Jemputan',
-        relationship,
+        relationship: finalRelationship,
         message: message.trim(),
         photo: photoUrl || null
       });
@@ -88,6 +95,8 @@ export default function GuestWishForm({ onWishSubmitted }) {
 
   const handleReset = () => {
     setSender('');
+    setRelationship(RELATIONSHIPS[0]);
+    setCustomRelationship('');
     setMessage('');
     setPhotoUrl('');
     setErrorMessage('');
@@ -172,6 +181,22 @@ export default function GuestWishForm({ onWishSubmitted }) {
                 </option>
               ))}
             </select>
+
+            {/* Custom Relationship Input Field */}
+            {relationship === 'Lain-lain (Tulis Sendiri)' && (
+              <div className="relative mt-2.5 animate-fade-in">
+                <Users className="absolute left-3.5 top-3.5 w-4 h-4 text-[#D4AF37]" />
+                <input
+                  type="text"
+                  required
+                  maxLength={50}
+                  placeholder="Taip hubungan anda (Contoh: Anak Saudara / Bekas Rakan Kerja)"
+                  value={customRelationship}
+                  onChange={(e) => setCustomRelationship(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-[#1A1008] border-2 border-[#D4AF37] rounded-xl text-[#FAF0D7] placeholder-[#A89578]/50 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-sm"
+                />
+              </div>
+            )}
           </div>
 
           {/* Mesej Ucapan */}

@@ -15,7 +15,8 @@ import {
   Calendar,
   AlertTriangle,
   RefreshCw,
-  Clock
+  Clock,
+  Search
 } from 'lucide-react';
 import { 
   getStoredWishes, 
@@ -41,6 +42,7 @@ export default function AdminDashboard({ onClose }) {
   const [lockoutTimer, setLockoutTimer] = useState(0);
   
   const [activeTab, setActiveTab] = useState('wishes'); // 'wishes', 'photos', 'memories'
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [wishes, setWishes] = useState([]);
   const [eventPhotos, setEventPhotos] = useState([]);
@@ -135,8 +137,7 @@ export default function AdminDashboard({ onClose }) {
     const updated = await updateWish(editingWish.id, {
       sender: editingWish.sender,
       relationship: editingWish.relationship,
-      message: editingWish.message,
-      sticker: editingWish.sticker
+      message: editingWish.message
     });
     setWishes(updated);
     setEditingWish(null);
@@ -186,6 +187,33 @@ export default function AdminDashboard({ onClose }) {
       reader.readAsDataURL(file);
     }
   };
+
+  // SEARCH FILTER LOGIC
+  const filteredWishes = wishes.filter(w => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (w.sender && w.sender.toLowerCase().includes(q)) ||
+      (w.relationship && w.relationship.toLowerCase().includes(q)) ||
+      (w.message && w.message.toLowerCase().includes(q))
+    );
+  });
+
+  const filteredPhotos = eventPhotos.filter(p => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (p.uploader && p.uploader.toLowerCase().includes(q)) ||
+      (p.caption && p.caption.toLowerCase().includes(q))
+    );
+  });
+
+  const filteredMemories = memories.filter(m => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (m.title && m.title.toLowerCase().includes(q)) ||
+      (m.year && m.year.toLowerCase().includes(q)) ||
+      (m.caption && m.caption.toLowerCase().includes(q))
+    );
+  });
 
   // UNAUTHENTICATED PIN MODAL WITH BRUTE-FORCE PROTECTION
   if (!isAuthenticated) {
@@ -290,56 +318,78 @@ export default function AdminDashboard({ onClose }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 my-6 overflow-x-auto pb-2 border-b border-white/5">
-        <button
-          onClick={() => setActiveTab('wishes')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-typewriter transition-all cursor-pointer whitespace-nowrap ${
-            activeTab === 'wishes'
-              ? 'bg-[#D4AF37] text-black shadow-lg'
-              : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
-          }`}
-        >
-          <Mail className="w-4 h-4" /> Kad Ucapan ({wishes.length})
-        </button>
+      {/* Tabs & Search Bar */}
+      <div className="my-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setActiveTab('wishes')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-typewriter transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'wishes'
+                ? 'bg-[#D4AF37] text-black shadow-lg'
+                : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
+            }`}
+          >
+            <Mail className="w-4 h-4" /> Kad Ucapan ({wishes.length})
+          </button>
 
-        <button
-          onClick={() => setActiveTab('photos')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-typewriter transition-all cursor-pointer whitespace-nowrap ${
-            activeTab === 'photos'
-              ? 'bg-[#D4AF37] text-black shadow-lg'
-              : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
-          }`}
-        >
-          <Camera className="w-4 h-4" /> Foto Majlis Live ({eventPhotos.length})
-        </button>
+          <button
+            onClick={() => setActiveTab('photos')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-typewriter transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'photos'
+                ? 'bg-[#D4AF37] text-black shadow-lg'
+                : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
+            }`}
+          >
+            <Camera className="w-4 h-4" /> Foto Live ({eventPhotos.length})
+          </button>
 
-        <button
-          onClick={() => setActiveTab('memories')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-typewriter transition-all cursor-pointer whitespace-nowrap ${
-            activeTab === 'memories'
-              ? 'bg-[#D4AF37] text-black shadow-lg'
-              : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
-          }`}
-        >
-          <Film className="w-4 h-4" /> Memori Tok Wan ({memories.length})
-        </button>
+          <button
+            onClick={() => setActiveTab('memories')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-typewriter transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'memories'
+                ? 'bg-[#D4AF37] text-black shadow-lg'
+                : 'bg-[#241A13] text-[#A89578] border border-[#D4AF37]/30 hover:text-white'
+            }`}
+          >
+            <Film className="w-4 h-4" /> Memori Tok Wan ({memories.length})
+          </button>
+        </div>
+
+        {/* INSTANT SEARCH BAR */}
+        <div className="relative min-w-[260px]">
+          <Search className="absolute left-3 top-2.5 w-4 h-4 text-[#A89578]" />
+          <input
+            type="text"
+            placeholder="Cari pengirim, mesej, tajuk..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 bg-[#1A1008] border border-[#D4AF37]/40 rounded-xl text-xs text-[#FAF0D7] placeholder-[#A89578]/50 focus:outline-none focus:border-[#D4AF37]"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-2.5 text-[#A89578] hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TAB 1: MANAGE WISHES */}
       {activeTab === 'wishes' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center text-xs text-[#A89578] font-typewriter mb-2">
-            <span>MENAMPILKAN {wishes.length} UCAPAN TETAMU</span>
+            <span>MENAMPILKAN {filteredWishes.length} DARIPADA {wishes.length} UCAPAN</span>
           </div>
 
-          {wishes.length === 0 ? (
+          {filteredWishes.length === 0 ? (
             <div className="text-center py-12 bg-[#241A13] rounded-xl border border-dashed border-[#D4AF37]/30 text-xs text-[#A89578]">
-              Tiada kad ucapan di dalam senarai.
+              {searchQuery ? `Tiada ucapan ditemui untuk carian "${searchQuery}".` : 'Tiada kad ucapan di dalam senarai.'}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
-              {wishes.map((w) => (
+              {filteredWishes.map((w) => (
                 <div
                   key={w.id}
                   className="bg-[#241A13] border border-[#D4AF37]/30 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#D4AF37]/70 transition-colors"
@@ -365,11 +415,6 @@ export default function AdminDashboard({ onClose }) {
                         <span className="text-[10px] font-typewriter text-[#D4AF37] bg-[#1A1008] px-2 py-0.5 rounded border border-[#D4AF37]/30">
                           {w.relationship}
                         </span>
-                        {w.sticker && (
-                          <span className="text-[9px] font-typewriter text-[#FAF0D7] bg-[#8C1C1C]/60 px-2 py-0.5 rounded">
-                            {w.sticker}
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-[#FAF0D7]/90 font-sans italic line-clamp-2">
                         "{w.message}"
@@ -405,16 +450,16 @@ export default function AdminDashboard({ onClose }) {
       {activeTab === 'photos' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center text-xs text-[#A89578] font-typewriter mb-2">
-            <span>MENAMPILKAN {eventPhotos.length} FOTO MAJLIS LIVE</span>
+            <span>MENAMPILKAN {filteredPhotos.length} DARIPADA {eventPhotos.length} FOTO LIVE</span>
           </div>
 
-          {eventPhotos.length === 0 ? (
+          {filteredPhotos.length === 0 ? (
             <div className="text-center py-12 bg-[#241A13] rounded-xl border border-dashed border-[#D4AF37]/30 text-xs text-[#A89578]">
-              Tiada foto majlis di dalam senarai.
+              {searchQuery ? `Tiada foto majlis ditemui untuk carian "${searchQuery}".` : 'Tiada foto majlis di dalam senarai.'}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {eventPhotos.map((p) => (
+              {filteredPhotos.map((p) => (
                 <div
                   key={p.id}
                   className="bg-[#241A13] border border-[#D4AF37]/30 rounded-xl p-3 flex flex-col justify-between"
@@ -460,7 +505,7 @@ export default function AdminDashboard({ onClose }) {
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs text-[#A89578] font-typewriter">
-              MENAMPILKAN {memories.length} MEMORI SEJARAH TOK WAN
+              MENAMPILKAN {filteredMemories.length} DARIPADA {memories.length} MEMORI SEJARAH
             </span>
 
             <button
@@ -471,13 +516,13 @@ export default function AdminDashboard({ onClose }) {
             </button>
           </div>
 
-          {memories.length === 0 ? (
+          {filteredMemories.length === 0 ? (
             <div className="text-center py-12 bg-[#241A13] rounded-xl border border-dashed border-[#D4AF37]/30 text-xs text-[#A89578]">
-              Tiada memori sejarah Tok Wan. Tekan 'Tambah Memori Baharu' untuk menambah gambar.
+              {searchQuery ? `Tiada memori ditemui untuk carian "${searchQuery}".` : 'Tiada memori sejarah Tok Wan. Tekan \'Tambah Memori Baharu\' untuk menambah gambar.'}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {memories.map((m) => (
+              {filteredMemories.map((m) => (
                 <div
                   key={m.id}
                   className="bg-[#241A13] border border-[#D4AF37]/30 rounded-xl p-3 flex flex-col justify-between"

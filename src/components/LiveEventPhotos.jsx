@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Image as ImageIcon, Sparkles, Upload, User, CheckCircle2, Film } from 'lucide-react';
+import { Camera, Image as ImageIcon, Sparkles, Upload, User, CheckCircle2, Film, Download, Eye, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getEventPhotos, addEventPhoto } from '../services/wishService';
 
@@ -9,10 +9,15 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
   const [caption, setCaption] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [activePhoto, setActivePhoto] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Saiz gambar terlalu besar! Sila pilih gambar di bawah 5MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoUrl(reader.result);
@@ -51,6 +56,16 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
     }
   };
 
+  // Helper to trigger image file download
+  const handleDownloadImage = (url, filename = 'tokwan-foto-majlis.jpg') => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-4 relative z-20">
       {/* Header */}
@@ -62,7 +77,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
           ALBUM GAMBAR MAJLIS LIVE
         </h2>
         <p className="text-sm md:text-base text-[#FAF0D7] font-heading italic mt-2">
-          Muat naik foto kenangan anda semasa majlis sambutan Tok Wan Hasnul berlangsung!
+          Muat naik & muat turun foto kenangan semasa majlis sambutan Tok Wan Hasnul!
         </p>
 
         <div className="mt-6">
@@ -94,6 +109,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
               <input
                 type="text"
                 required
+                maxLength={60}
                 placeholder="Contoh: Pak Su & Mak Su"
                 value={uploader}
                 onChange={(e) => setUploader(e.target.value)}
@@ -107,6 +123,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
               </label>
               <input
                 type="text"
+                maxLength={200}
                 placeholder="Contoh: Sesi potong kek Tok Wan!"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
@@ -116,7 +133,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
 
             <div>
               <label className="block text-xs font-semibold text-[#D4AF37] uppercase mb-1 font-typewriter">
-                Pilih Gambar Dari Telefon / Kamera
+                Pilih Gambar Dari Telefon / Kamera (Max 5MB)
               </label>
               <label className="flex items-center justify-center gap-2 py-4 px-4 bg-[#1A1008] border-2 border-dashed border-[#D4AF37]/50 rounded-xl text-sm text-[#A89578] hover:text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer transition-colors">
                 <Camera className="w-5 h-5 text-[#D4AF37]" />
@@ -153,22 +170,39 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
           {photos.map((pt) => (
             <div
               key={pt.id}
-              className="bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-xl p-3 shadow-xl hover:border-[#D4AF37] transition-all overflow-hidden"
+              className="bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-xl p-3 shadow-xl hover:border-[#D4AF37] transition-all overflow-hidden flex flex-col justify-between group"
             >
-              <div className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30">
+              <div 
+                className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30 cursor-pointer"
+                onClick={() => setActivePhoto(pt)}
+              >
                 <img
                   src={pt.url}
                   alt={pt.caption}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <span className="p-2 rounded-full bg-black/70 border border-[#D4AF37] text-[#D4AF37]">
+                    <Eye className="w-4 h-4" />
+                  </span>
+                </div>
               </div>
+
               <div className="px-1">
                 <p className="text-sm font-bold font-heading text-[#FAF0D7] line-clamp-2">
                   "{pt.caption}"
                 </p>
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs text-[#A89578] font-typewriter">
                   <span>Oleh: <strong className="text-[#D4AF37]">{pt.uploader}</strong></span>
-                  <span>{new Date(pt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  
+                  {/* Download Button */}
+                  <button
+                    onClick={() => handleDownloadImage(pt.url, `tokwan-foto-${pt.uploader}.jpg`)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1A1008] border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors cursor-pointer"
+                    title="Muat Turun Foto"
+                  >
+                    <Download className="w-3 h-3" /> Simpan
+                  </button>
                 </div>
               </div>
             </div>
@@ -183,6 +217,42 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
           <p className="text-xs text-[#A89578] font-typewriter">
             Jadilah orang pertama yang memuat naik foto kenangan suasana majlis Tok Wan!
           </p>
+        </div>
+      )}
+
+      {/* FULLSCREEN PHOTO PREVIEW & DOWNLOAD MODAL */}
+      {activePhoto && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="relative max-w-3xl w-full bg-[#241A13] border-2 border-[#D4AF37] rounded-2xl p-6 md:p-8 shadow-[0_0_60px_rgba(212,175,55,0.6)] text-center">
+            <button
+              onClick={() => setActivePhoto(null)}
+              className="absolute top-4 right-4 text-[#A89578] hover:text-white p-2 rounded-full border border-white/10 bg-black/40"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="relative rounded-xl overflow-hidden mb-4 border border-[#D4AF37]/60 bg-black max-h-[60vh] inline-block">
+              <img
+                src={activePhoto.url}
+                alt={activePhoto.caption}
+                className="max-h-[60vh] w-auto object-contain rounded-lg"
+              />
+            </div>
+
+            <h3 className="text-lg md:text-xl font-bold font-heading text-[#FAF0D7] mb-1">
+              "{activePhoto.caption}"
+            </h3>
+            <p className="text-xs text-[#D4AF37] font-typewriter mb-4">
+              DIMUAT NAIK OLEH: {activePhoto.uploader}
+            </p>
+
+            <button
+              onClick={() => handleDownloadImage(activePhoto.url, `tokwan-foto-${activePhoto.uploader}.jpg`)}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-xs uppercase tracking-wider font-heading shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Muat Turun Foto Ini (High Quality)
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -3,13 +3,14 @@ import TvDisplayMode from './components/TvDisplayMode';
 import GuestWishForm from './components/GuestWishForm';
 import TokWanGallery from './components/TokWanGallery';
 import LiveEventPhotos from './components/LiveEventPhotos';
+import AdminDashboard from './components/AdminDashboard';
 import VintageCurtain from './components/VintageCurtain';
 import { getStoredWishes, subscribeToWishes } from './services/wishService';
-import { Tv, PenTool, Image as ImageIcon, Camera, ArrowLeft } from 'lucide-react';
+import { Tv, PenTool, Image as ImageIcon, Camera, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 export default function App() {
   const [wishes, setWishes] = useState([]);
-  const [viewMode, setViewMode] = useState('tv'); // 'tv', 'form', 'gallery', 'event-photos'
+  const [viewMode, setViewMode] = useState('tv'); // 'tv', 'form', 'gallery', 'event-photos', 'admin'
 
   useEffect(() => {
     setWishes(getStoredWishes());
@@ -78,6 +79,17 @@ export default function App() {
         >
           <Camera className="w-3.5 h-3.5" /> Foto Live
         </button>
+
+        <button
+          onClick={() => setViewMode('admin')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold text-[11px] md:text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+            viewMode === 'admin'
+              ? 'bg-gradient-to-r from-[#8C1C1C] to-[#5A0D0D] text-[#FAF0D7] shadow-md scale-105 border border-[#D4AF37]'
+              : 'text-[#A89578] hover:text-[#FAF0D7]'
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> Admin
+        </button>
       </nav>
 
       {/* View Switcher */}
@@ -109,6 +121,18 @@ export default function App() {
       {viewMode === 'event-photos' && (
         <div className="min-h-screen pt-20 pb-12 px-3 sm:px-4 relative z-20">
           <LiveEventPhotos />
+        </div>
+      )}
+
+      {viewMode === 'admin' && (
+        <div className="min-h-screen pt-20 pb-12 px-3 sm:px-4 flex flex-col items-center justify-center relative z-20">
+          <button
+            onClick={() => setViewMode('tv')}
+            className="mb-4 flex items-center gap-2 text-xs font-typewriter text-[#D4AF37] hover:underline cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" /> Kembali Ke Skrin TV Majlis
+          </button>
+          <AdminDashboard onClose={() => setViewMode('tv')} />
         </div>
       )}
     </VintageCurtain>

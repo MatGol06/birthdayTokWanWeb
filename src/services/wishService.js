@@ -2,28 +2,21 @@ import { db, isFirebaseConfigured } from './firebase';
 import { 
   collection, 
   addDoc, 
+  deleteDoc, 
+  updateDoc, 
+  doc, 
   onSnapshot, 
   query, 
   orderBy, 
   serverTimestamp 
 } from 'firebase/firestore';
 
-// Version 2 Storage Keys (Clears any old cached dummy items in browser localStorage)
+// Version 2 Storage Keys
 const STORAGE_WISHES_KEY = 'tokwan_hasnul_wishes_v2';
 const STORAGE_PHOTOS_KEY = 'tokwan_hasnul_event_photos_v2';
 const STORAGE_MEMORIES_KEY = 'tokwan_hasnul_memories_v2';
 const CHANNEL_NAME = 'tokwan_wishes_channel_v2';
 
-// Ensure old cached v1 dummy data is purged on load
-if (typeof window !== 'undefined' && window.localStorage) {
-  try {
-    localStorage.removeItem('tokwan_hasnul_wishes_v1');
-    localStorage.removeItem('tokwan_hasnul_event_photos_v1');
-    localStorage.removeItem('tokwan_hasnul_memories_v1');
-  } catch (e) {}
-}
-
-// Strictly Empty Initial Arrays
 const INITIAL_WISHES = [];
 const INITIAL_MEMORIES = [];
 const INITIAL_EVENT_PHOTOS = [];
@@ -37,7 +30,7 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
-// === WISHES ===
+// === WISHES CRUD ===
 export const getStoredWishes = () => {
   try {
     const data = localStorage.getItem(STORAGE_WISHES_KEY);
@@ -62,19 +55,22 @@ export const addWish = async (wishData) => {
     likes: 0
   };
 
+  let createdId = 'wish-' + Date.now();
+
   if (isFirebaseConfigured()) {
     try {
-      await addDoc(collection(db, 'wishes'), {
+      const docRef = await addDoc(collection(db, 'wishes'), {
         ...newWish,
         createdAt: serverTimestamp()
       });
+      createdId = docRef.id;
     } catch (err) {
       console.error('Firebase error adding wish:', err);
     }
   }
 
   const wishes = getStoredWishes();
-  const wishWithId = { ...newWish, id: 'wish-' + Date.now() };
+  const wishWithId = { ...newWish, id: createdId };
   const updatedWishes = [wishWithId, ...wishes];
   try {
     localStorage.setItem(STORAGE_WISHES_KEY, JSON.stringify(updatedWishes));
@@ -88,7 +84,47 @@ export const addWish = async (wishData) => {
   return wishWithId;
 };
 
-// === TOK WAN MEMORIES ===
+export const deleteWish = async (id) => {
+  if (isFirebaseConfigured()) {
+    try {
+      await deleteDoc(doc(db, 'wishes', id));
+    } catch (err) {
+      console.error('Firebase error deleting wish:', err);
+    }
+  }
+
+  const wishes = getStoredWishes();
+  const updatedWishes = wishes.filter(w => w.id !== id);
+  try {
+    localStorage.setItem(STORAGE_WISHES_KEY, JSON.stringify(updatedWishes));
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({ type: 'DELETE_WISH', id, allWishes: updatedWishes });
+    }
+  } catch (e) {}
+  return updatedWishes;
+};
+
+export const updateWish = async (id, updatedFields) => {
+  if (isFirebaseConfigured()) {
+    try {
+      await updateDoc(doc(db, 'wishes', id), updatedFields);
+    } catch (err) {
+      console.error('Firebase error updating wish:', err);
+    }
+  }
+
+  const wishes = getStoredWishes();
+  const updatedWishes = wishes.map(w => w.id === id ? { ...w, ...updatedFields } : w);
+  try {
+    localStorage.setItem(STORAGE_WISHES_KEY, JSON.stringify(updatedWishes));
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({ type: 'UPDATE_WISH', id, allWishes: updatedWishes });
+    }
+  } catch (e) {}
+  return updatedWishes;
+};
+
+// === TOK WAN MEMORIES CRUD ===
 export const getTokWanMemories = () => {
   try {
     const data = localStorage.getItem(STORAGE_MEMORIES_KEY);
@@ -118,7 +154,16 @@ export const addTokWanMemory = (memoryData) => {
   return newMem;
 };
 
-// === LIVE EVENT PHOTOS ===
+export const deleteTokWanMemory = (id) => {
+  const memories = getTokWanMemories();
+  const updated = memories.filter(m => m.id !== id);
+  try {
+    localStorage.setItem(STORAGE_MEMORIES_KEY, JSON.stringify(updated));
+  } catch (e) {}
+  return updated;
+};
+
+// === LIVE EVENT PHOTOS CRUD ===
 export const getEventPhotos = () => {
   try {
     const data = localStorage.getItem(STORAGE_PHOTOS_KEY);
@@ -140,19 +185,22 @@ export const addEventPhoto = async (photoData) => {
     timestamp: new Date().toISOString()
   };
 
+  let createdId = 'evt-' + Date.now();
+
   if (isFirebaseConfigured()) {
     try {
-      await addDoc(collection(db, 'event_photos'), {
+      const docRef = await addDoc(collection(db, 'event_photos'), {
         ...newPhoto,
         createdAt: serverTimestamp()
       });
+      createdId = docRef.id;
     } catch (err) {
       console.error('Firebase error adding photo:', err);
     }
   }
 
   const photos = getEventPhotos();
-  const photoWithId = { ...newPhoto, id: 'evt-' + Date.now() };
+  const photoWithId = { ...newPhoto, id: createdId };
   const updatedPhotos = [photoWithId, ...photos];
   try {
     localStorage.setItem(STORAGE_PHOTOS_KEY, JSON.stringify(updatedPhotos));
@@ -164,6 +212,46 @@ export const addEventPhoto = async (photoData) => {
   }
 
   return photoWithId;
+};
+
+export const deleteEventPhoto = async (id) => {
+  if (isFirebaseConfigured()) {
+    try {
+      await deleteDoc(doc(db, 'event_photos', id));
+    } catch (err) {
+      console.error('Firebase error deleting event photo:', err);
+    }
+  }
+
+  const photos = getEventPhotos();
+  const updatedPhotos = photos.filter(p => p.id !== id);
+  try {
+    localStorage.setItem(STORAGE_PHOTOS_KEY, JSON.stringify(updatedPhotos));
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({ type: 'DELETE_EVENT_PHOTO', id, allPhotos: updatedPhotos });
+    }
+  } catch (e) {}
+  return updatedPhotos;
+};
+
+export const updateEventPhoto = async (id, updatedFields) => {
+  if (isFirebaseConfigured()) {
+    try {
+      await updateDoc(doc(db, 'event_photos', id), updatedFields);
+    } catch (err) {
+      console.error('Firebase error updating photo:', err);
+    }
+  }
+
+  const photos = getEventPhotos();
+  const updatedPhotos = photos.map(p => p.id === id ? { ...p, ...updatedFields } : p);
+  try {
+    localStorage.setItem(STORAGE_PHOTOS_KEY, JSON.stringify(updatedPhotos));
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({ type: 'UPDATE_EVENT_PHOTO', id, allPhotos: updatedPhotos });
+    }
+  } catch (e) {}
+  return updatedPhotos;
 };
 
 // Realtime Subscriber
@@ -190,9 +278,10 @@ export const subscribeToWishes = (callback) => {
   if (!broadcastChannel) return () => {};
 
   const handleMessage = (event) => {
-    if (event.data && event.data.type === 'NEW_WISH') {
+    if (event.data && event.data.allWishes) {
       callback(event.data.allWishes, 'wishes');
-    } else if (event.data && event.data.type === 'NEW_EVENT_PHOTO') {
+    }
+    if (event.data && event.data.allPhotos) {
       callback(event.data.allPhotos, 'photos');
     }
   };

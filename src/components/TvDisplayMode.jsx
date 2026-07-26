@@ -170,7 +170,7 @@ export default function TvDisplayMode({ wishes, onOpenForm, onOpenAdmin }) {
               >
                 <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-[#D4AF37]/30">
                   <span className="stamp-badge text-[10px] sm:text-xs">
-                    {currentWish.sticker ? currentWish.sticker.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() : 'SENIMAN AGONG TOK WAN'}
+                    ULANG TAHUN KE-64 TOK WAN
                   </span>
                   <span className="text-[10px] sm:text-xs text-[#A89578] font-typewriter">
                     KAD #{currentIndex + 1}/{wishes.length}

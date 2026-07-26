@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
-import { Send, Heart, Camera, Sparkles, CheckCircle2, Film, User, MessageSquareQuote, Star, Clock } from 'lucide-react';
+import { Send, Heart, Camera, CheckCircle2, Film, User, MessageSquareQuote } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { addWish } from '../services/wishService';
-
-const STICKERS = [
-  'SENIMAN AGONG TOK WAN',
-  'TOK WAN PALING BEST',
-  'GENG KOPI VINTAJ',
-  'KASIH TAK BERTEPI',
-  'LEGEND BUJANG LAPOK',
-  'SELAMAT HARI JADI TOK WAN'
-];
 
 const RELATIONSHIPS = [
   'Cucu Kesayangan',
@@ -25,7 +16,6 @@ export default function GuestWishForm({ onWishSubmitted }) {
   const [sender, setSender] = useState('');
   const [relationship, setRelationship] = useState(RELATIONSHIPS[0]);
   const [message, setMessage] = useState('');
-  const [selectedSticker, setSelectedSticker] = useState(STICKERS[0]);
   const [photoUrl, setPhotoUrl] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,12 +25,10 @@ export default function GuestWishForm({ onWishSubmitted }) {
     setErrorMessage('');
     const file = e.target.files[0];
     if (file) {
-      // SECURITY: Check File Size (Max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setErrorMessage('Saiz gambar terlalu besar! Sila pilih gambar di bawah 5MB.');
         return;
       }
-      // SECURITY: Check MIME Type
       if (!file.type.startsWith('image/')) {
         setErrorMessage('Format fail tidak sah! Sila pilih fail gambar sahaja.');
         return;
@@ -59,7 +47,6 @@ export default function GuestWishForm({ onWishSubmitted }) {
     setErrorMessage('');
     if (!message.trim() || isSubmitting) return;
 
-    // SECURITY: Anti-Spam Rate Limit Check via LocalStorage
     const lastSubmission = localStorage.getItem('last_wish_submission_time');
     const now = Date.now();
     if (lastSubmission && now - parseInt(lastSubmission) < 30000) {
@@ -74,7 +61,6 @@ export default function GuestWishForm({ onWishSubmitted }) {
         sender: sender.trim() || 'Tetamu Jemputan',
         relationship,
         message: message.trim(),
-        sticker: selectedSticker,
         photo: photoUrl || null
       });
 
@@ -188,34 +174,10 @@ export default function GuestWishForm({ onWishSubmitted }) {
             </select>
           </div>
 
-          {/* Sticker Selection */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#D4AF37] mb-2 font-typewriter">
-              3. Pilih Cop Klasik
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {STICKERS.map((stk) => (
-                <button
-                  type="button"
-                  key={stk}
-                  onClick={() => setSelectedSticker(stk)}
-                  className={`p-2.5 rounded-lg border text-xs text-left font-medium transition-all flex items-center gap-1.5 ${
-                    selectedSticker === stk
-                      ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#FAF0D7] shadow-[0_0_10px_rgba(212,175,55,0.3)]'
-                      : 'bg-[#1A1008] border-white/5 text-[#A89578] hover:border-[#D4AF37]/30'
-                  }`}
-                >
-                  <Star className="w-3 h-3 text-[#D4AF37] flex-shrink-0" />
-                  <span className="line-clamp-1">{stk}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Mesej Ucapan */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#D4AF37] mb-2 font-typewriter">
-              4. Mesej & Doa Untuk Tok Wan Hasnul
+              3. Mesej & Doa Untuk Tok Wan Hasnul
             </label>
             <div className="relative">
               <MessageSquareQuote className="absolute left-3.5 top-3.5 w-4 h-4 text-[#A89578]" />
@@ -234,7 +196,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
           {/* Muat Naik Foto */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#D4AF37] mb-2 font-typewriter">
-              5. Lampirkan Gambar Bersama Tok Wan (Max 5MB)
+              4. Lampirkan Gambar Bersama Tok Wan (Optional, Max 5MB)
             </label>
             <div className="flex items-center gap-4">
               <label className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-[#1A1008] border border-dashed border-[#D4AF37]/40 rounded-xl text-xs text-[#A89578] hover:text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer transition-colors">

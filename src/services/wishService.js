@@ -17,6 +17,32 @@ const STORAGE_PHOTOS_KEY = 'tokwan_hasnul_event_photos_v2';
 const STORAGE_MEMORIES_KEY = 'tokwan_hasnul_memories_v2';
 const CHANNEL_NAME = 'tokwan_wishes_channel_v2';
 
+// SECURITY: Sanitize text to prevent XSS / Script Injection attacks
+export const sanitizeText = (str, maxLength = 500) => {
+  if (typeof str !== 'string') return '';
+  // Strip HTML tags and script elements
+  const cleanStr = str
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/[<>"']/g, '')
+    .trim();
+  return cleanStr.substring(0, maxLength);
+};
+
+// SECURITY: Validate Image Data URL and limit max file payload (Max 5MB)
+export const validateImageDataUrl = (dataUrl, maxSizeBytes = 5 * 1024 * 1024) => {
+  if (!dataUrl) return null;
+  if (typeof dataUrl !== 'string') return null;
+  if (!dataUrl.startsWith('data:image/')) return null;
+  
+  // Approximate Base64 size check
+  const stringLength = dataUrl.length - dataUrl.indexOf(',') - 1;
+  const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.5624896;
+  if (sizeInBytes > maxSizeBytes) {
+    throw new Error('Saiz gambar melebihi had keselamatan (Maksimum 5MB)');
+  }
+  return dataUrl;
+};
+
 const INITIAL_WISHES = [];
 const INITIAL_MEMORIES = [];
 const INITIAL_EVENT_PHOTOS = [];
@@ -45,12 +71,19 @@ export const getStoredWishes = () => {
 };
 
 export const addWish = async (wishData) => {
+  // SECURITY: Sanitize all input fields
+  const sanitizedSender = sanitizeText(wishData.sender || 'Tetamu Jemputan', 60);
+  const sanitizedRel = sanitizeText(wishData.relationship || 'Ahli Keluarga', 50);
+  const sanitizedMsg = sanitizeText(wishData.message, 500);
+  const sanitizedSticker = sanitizeText(wishData.sticker || 'SELAMAT HARI JADI', 50);
+  const validatedPhoto = validateImageDataUrl(wishData.photo);
+
   const newWish = {
-    sender: wishData.sender || 'Tetamu Jemputan',
-    relationship: wishData.relationship || 'Ahli Keluarga',
-    message: wishData.message,
-    photo: wishData.photo || null,
-    sticker: wishData.sticker || 'SELAMAT HARI JADI',
+    sender: sanitizedSender,
+    relationship: sanitizedRel,
+    message: sanitizedMsg,
+    photo: validatedPhoto,
+    sticker: sanitizedSticker,
     timestamp: new Date().toISOString(),
     likes: 0
   };
@@ -105,16 +138,22 @@ export const deleteWish = async (id) => {
 };
 
 export const updateWish = async (id, updatedFields) => {
+  const sanitizedFields = {};
+  if (updatedFields.sender) sanitizedFields.sender = sanitizeText(updatedFields.sender, 60);
+  if (updatedFields.relationship) sanitizedFields.relationship = sanitizeText(updatedFields.relationship, 50);
+  if (updatedFields.message) sanitizedFields.message = sanitizeText(updatedFields.message, 500);
+  if (updatedFields.sticker) sanitizedFields.sticker = sanitizeText(updatedFields.sticker, 50);
+
   if (isFirebaseConfigured()) {
     try {
-      await updateDoc(doc(db, 'wishes', id), updatedFields);
+      await updateDoc(doc(db, 'wishes', id), sanitizedFields);
     } catch (err) {
       console.error('Firebase error updating wish:', err);
     }
   }
 
   const wishes = getStoredWishes();
-  const updatedWishes = wishes.map(w => w.id === id ? { ...w, ...updatedFields } : w);
+  const updatedWishes = wishes.map(w => w.id === id ? { ...w, ...sanitizedFields } : w);
   try {
     localStorage.setItem(STORAGE_WISHES_KEY, JSON.stringify(updatedWishes));
     if (broadcastChannel) {
@@ -142,10 +181,10 @@ export const addTokWanMemory = (memoryData) => {
   const memories = getTokWanMemories();
   const newMem = {
     id: 'mem-' + Date.now(),
-    title: memoryData.title || 'Memori Tok Wan',
-    year: memoryData.year || '2026',
-    caption: memoryData.caption || '',
-    url: memoryData.url
+    title: sanitizeText(memoryData.title || 'Memori Tok Wan', 100),
+    year: sanitizeText(memoryData.year || '2026', 10),
+    caption: sanitizeText(memoryData.caption || '', 300),
+    url: validateImageDataUrl(memoryData.url)
   };
   const updated = [newMem, ...memories];
   try {
@@ -178,10 +217,14 @@ export const getEventPhotos = () => {
 };
 
 export const addEventPhoto = async (photoData) => {
+  const sanitizedUploader = sanitizeText(photoData.uploader || 'Tetamu Majlis', 60);
+  const sanitizedCaption = sanitizeText(photoData.caption || 'Koleksi Gambar Majlis Tok Wan', 200);
+  const validatedUrl = validateImageDataUrl(photoData.url);
+
   const newPhoto = {
-    uploader: photoData.uploader || 'Tetamu Majlis',
-    caption: photoData.caption || 'Koleksi Gambar Majlis Tok Wan',
-    url: photoData.url,
+    uploader: sanitizedUploader,
+    caption: sanitizedCaption,
+    url: validatedUrl,
     timestamp: new Date().toISOString()
   };
 
@@ -235,16 +278,20 @@ export const deleteEventPhoto = async (id) => {
 };
 
 export const updateEventPhoto = async (id, updatedFields) => {
+  const sanitizedFields = {};
+  if (updatedFields.uploader) sanitizedFields.uploader = sanitizeText(updatedFields.uploader, 60);
+  if (updatedFields.caption) sanitizedFields.caption = sanitizeText(updatedFields.caption, 200);
+
   if (isFirebaseConfigured()) {
     try {
-      await updateDoc(doc(db, 'event_photos', id), updatedFields);
+      await updateDoc(doc(db, 'event_photos', id), sanitizedFields);
     } catch (err) {
       console.error('Firebase error updating photo:', err);
     }
   }
 
   const photos = getEventPhotos();
-  const updatedPhotos = photos.map(p => p.id === id ? { ...p, ...updatedFields } : p);
+  const updatedPhotos = photos.map(p => p.id === id ? { ...p, ...sanitizedFields } : p);
   try {
     localStorage.setItem(STORAGE_PHOTOS_KEY, JSON.stringify(updatedPhotos));
     if (broadcastChannel) {

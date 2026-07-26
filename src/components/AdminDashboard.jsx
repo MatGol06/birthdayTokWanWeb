@@ -14,7 +14,8 @@ import {
   MessageSquareQuote,
   Calendar,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { 
   getStoredWishes, 
@@ -29,12 +30,15 @@ import {
   subscribeToWishes 
 } from '../services/wishService';
 
-const DEFAULT_PIN = '1962'; // Tok Wan Birth Year PIN
+const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || '1962';
 
 export default function AdminDashboard({ onClose }) {
   const [pinInput, setPinInput] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinError, setPinError] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
   
   const [activeTab, setActiveTab] = useState('wishes'); // 'wishes', 'photos', 'memories'
   
@@ -61,6 +65,19 @@ export default function AdminDashboard({ onClose }) {
     return () => unsub();
   }, []);
 
+  // Handle Brute Force Lockout Timer
+  useEffect(() => {
+    if (lockoutTimer > 0) {
+      const timer = setTimeout(() => {
+        setLockoutTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (lockoutTimer === 0 && isLockedOut) {
+      setIsLockedOut(false);
+      setFailedAttempts(0);
+    }
+  }, [lockoutTimer, isLockedOut]);
+
   const loadAllData = () => {
     setWishes(getStoredWishes());
     setEventPhotos(getEventPhotos());
@@ -69,11 +86,22 @@ export default function AdminDashboard({ onClose }) {
 
   const handlePinSubmit = (e) => {
     e.preventDefault();
-    if (pinInput.trim() === DEFAULT_PIN || pinInput.trim() === '1234') {
+    if (isLockedOut) return;
+
+    if (pinInput.trim() === ADMIN_PIN || pinInput.trim() === '1234') {
       setIsAuthenticated(true);
       setPinError(false);
+      setFailedAttempts(0);
     } else {
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
       setPinError(true);
+      setPinInput('');
+
+      if (nextAttempts >= 4) {
+        setIsLockedOut(true);
+        setLockoutTimer(60); // 60s lockout
+      }
     }
   };
 
@@ -147,6 +175,10 @@ export default function AdminDashboard({ onClose }) {
   const handleFileChange = (e, setUrl) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Saiz gambar terlalu besar! Sila pilih gambar di bawah 5MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setUrl(reader.result);
@@ -155,7 +187,7 @@ export default function AdminDashboard({ onClose }) {
     }
   };
 
-  // UNAUTHENTICATED PIN MODAL
+  // UNAUTHENTICATED PIN MODAL WITH BRUTE-FORCE PROTECTION
   if (!isAuthenticated) {
     return (
       <div className="w-full max-w-md mx-auto bg-[#241A13] border-2 border-[#D4AF37] rounded-2xl p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] relative text-center">
@@ -169,42 +201,54 @@ export default function AdminDashboard({ onClose }) {
           Masukkan PIN Kawalan Majlis (Default PIN: 1962)
         </p>
 
-        <form onSubmit={handlePinSubmit} className="space-y-4">
-          <input
-            type="password"
-            maxLength={6}
-            required
-            autoFocus
-            placeholder="Masukkan 4-digit PIN"
-            value={pinInput}
-            onChange={(e) => setPinInput(e.target.value)}
-            className="w-full text-center tracking-widest text-2xl py-3 px-4 bg-[#1A1008] border border-[#D4AF37]/40 rounded-xl text-[#FAF0D7] placeholder-[#A89578]/40 focus:outline-none focus:border-[#D4AF37]"
-          />
-
-          {pinError && (
-            <p className="text-xs text-[#8C1C1C] font-bold flex items-center justify-center gap-1 font-sans">
-              <AlertTriangle className="w-3.5 h-3.5" /> PIN Salah! Sila cuba lagi (1962).
+        {isLockedOut ? (
+          <div className="py-6 px-4 bg-[#8C1C1C]/20 border border-[#8C1C1C] rounded-xl text-[#FAF0D7] mb-4">
+            <Clock className="w-8 h-8 text-[#8C1C1C] mx-auto mb-2 animate-bounce" />
+            <h4 className="font-bold text-sm text-[#8C1C1C]">Akses Dikunci Sementara!</h4>
+            <p className="text-xs text-[#A89578] font-typewriter mt-1">
+              Terlalu banyak percubaan PIN salah. Sila tunggu <strong className="text-white">{lockoutTimer}s</strong> sebelum mencuba lagi.
             </p>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-3 rounded-xl bg-black/40 border border-white/10 text-[#A89578] hover:text-white font-bold text-xs uppercase cursor-pointer"
-              >
-                Batal
-              </button>
-            )}
-            <button
-              type="submit"
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-xs uppercase tracking-wider font-heading shadow-xl cursor-pointer"
-            >
-              Masuk Admin
-            </button>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handlePinSubmit} className="space-y-4">
+            <input
+              type="password"
+              maxLength={6}
+              required
+              autoFocus
+              disabled={isLockedOut}
+              placeholder="Masukkan 4-digit PIN"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              className="w-full text-center tracking-widest text-2xl py-3 px-4 bg-[#1A1008] border border-[#D4AF37]/40 rounded-xl text-[#FAF0D7] placeholder-[#A89578]/40 focus:outline-none focus:border-[#D4AF37]"
+            />
+
+            {pinError && (
+              <p className="text-xs text-[#8C1C1C] font-bold flex items-center justify-center gap-1 font-sans">
+                <AlertTriangle className="w-3.5 h-3.5" /> PIN Salah! Percubaan ({failedAttempts}/4).
+              </p>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              {onClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 rounded-xl bg-black/40 border border-white/10 text-[#A89578] hover:text-white font-bold text-xs uppercase cursor-pointer"
+                >
+                  Batal
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isLockedOut}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-xs uppercase tracking-wider font-heading shadow-xl cursor-pointer disabled:opacity-50"
+              >
+                Masuk Admin
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     );
   }
@@ -216,7 +260,7 @@ export default function AdminDashboard({ onClose }) {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-[#D4AF37]/30">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#8C1C1C] text-[#FAF0D7] text-[10px] font-typewriter font-bold uppercase tracking-widest mb-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> MOD KAWALAN ADMINT MAJLIS
+            <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> MOD KAWALAN ADMIN MAJLIS
           </div>
           <h2 className="text-2xl sm:text-3xl font-black font-cinema text-gold-gradient uppercase">
             PENGURUS KANDUNGAN WEBSITES
@@ -496,6 +540,7 @@ export default function AdminDashboard({ onClose }) {
               <input
                 type="text"
                 required
+                maxLength={60}
                 value={editingWish.sender}
                 onChange={(e) => setEditingWish({ ...editingWish, sender: e.target.value })}
                 className="w-full px-3 py-2 bg-[#1A1008] border border-[#D4AF37]/30 rounded-lg text-sm text-[#FAF0D7]"
@@ -508,6 +553,7 @@ export default function AdminDashboard({ onClose }) {
               </label>
               <input
                 type="text"
+                maxLength={50}
                 value={editingWish.relationship}
                 onChange={(e) => setEditingWish({ ...editingWish, relationship: e.target.value })}
                 className="w-full px-3 py-2 bg-[#1A1008] border border-[#D4AF37]/30 rounded-lg text-sm text-[#FAF0D7]"
@@ -521,6 +567,7 @@ export default function AdminDashboard({ onClose }) {
               <textarea
                 rows={3}
                 required
+                maxLength={500}
                 value={editingWish.message}
                 onChange={(e) => setEditingWish({ ...editingWish, message: e.target.value })}
                 className="w-full px-3 py-2 bg-[#1A1008] border border-[#D4AF37]/30 rounded-lg text-sm text-[#FAF0D7] resize-none"
@@ -573,6 +620,7 @@ export default function AdminDashboard({ onClose }) {
               <input
                 type="text"
                 required
+                maxLength={60}
                 value={editingPhoto.uploader}
                 onChange={(e) => setEditingPhoto({ ...editingPhoto, uploader: e.target.value })}
                 className="w-full px-3 py-2 bg-[#1A1008] border border-[#D4AF37]/30 rounded-lg text-sm text-[#FAF0D7]"
@@ -586,6 +634,7 @@ export default function AdminDashboard({ onClose }) {
               <input
                 type="text"
                 required
+                maxLength={200}
                 value={editingPhoto.caption}
                 onChange={(e) => setEditingPhoto({ ...editingPhoto, caption: e.target.value })}
                 className="w-full px-3 py-2 bg-[#1A1008] border border-[#D4AF37]/30 rounded-lg text-sm text-[#FAF0D7]"
@@ -638,6 +687,7 @@ export default function AdminDashboard({ onClose }) {
               <input
                 type="text"
                 required
+                maxLength={100}
                 placeholder="Contoh: Hari Persandingan Tok Wan"
                 value={newMemTitle}
                 onChange={(e) => setNewMemTitle(e.target.value)}
@@ -652,6 +702,7 @@ export default function AdminDashboard({ onClose }) {
               <input
                 type="text"
                 required
+                maxLength={10}
                 placeholder="Contoh: 1986"
                 value={newMemYear}
                 onChange={(e) => setNewMemYear(e.target.value)}
@@ -665,6 +716,7 @@ export default function AdminDashboard({ onClose }) {
               </label>
               <input
                 type="text"
+                maxLength={300}
                 placeholder="Contoh: Momen manis perkahwinan Tok Wan"
                 value={newMemCaption}
                 onChange={(e) => setNewMemCaption(e.target.value)}
@@ -674,7 +726,7 @@ export default function AdminDashboard({ onClose }) {
 
             <div>
               <label className="block text-xs font-semibold text-[#D4AF37] uppercase mb-1 font-typewriter">
-                Pilih Gambar Memori
+                Pilih Gambar Memori (Max 5MB)
               </label>
               <input
                 type="file"

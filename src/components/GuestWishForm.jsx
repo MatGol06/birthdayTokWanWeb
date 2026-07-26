@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Heart, Camera, Sparkles, CheckCircle2, Film, User, MessageSquareQuote, Star } from 'lucide-react';
+import { Send, Heart, Camera, Sparkles, CheckCircle2, Film, User, MessageSquareQuote, Star, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { addWish } from '../services/wishService';
 
@@ -28,10 +28,24 @@ export default function GuestWishForm({ onWishSubmitted }) {
   const [selectedSticker, setSelectedSticker] = useState(STICKERS[0]);
   const [photoUrl, setPhotoUrl] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleFileChange = (e) => {
+    setErrorMessage('');
     const file = e.target.files[0];
     if (file) {
+      // SECURITY: Check File Size (Max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage('Saiz gambar terlalu besar! Sila pilih gambar di bawah 5MB.');
+        return;
+      }
+      // SECURITY: Check MIME Type
+      if (!file.type.startsWith('image/')) {
+        setErrorMessage('Format fail tidak sah! Sila pilih fail gambar sahaja.');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoUrl(reader.result);
@@ -40,30 +54,49 @@ export default function GuestWishForm({ onWishSubmitted }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    setErrorMessage('');
+    if (!message.trim() || isSubmitting) return;
 
-    const newWish = addWish({
-      sender: sender.trim() || 'Tetamu Jemputan',
-      relationship,
-      message: message.trim(),
-      sticker: selectedSticker,
-      photo: photoUrl || null
-    });
+    // SECURITY: Anti-Spam Rate Limit Check via LocalStorage
+    const lastSubmission = localStorage.getItem('last_wish_submission_time');
+    const now = Date.now();
+    if (lastSubmission && now - parseInt(lastSubmission) < 30000) {
+      const waitSeconds = Math.ceil((30000 - (now - parseInt(lastSubmission))) / 1000);
+      setErrorMessage(`Sila tunggu ${waitSeconds} saat sebelum menghantar ucapan seterusnya.`);
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#D4AF37', '#F4E0A5', '#8C1C1C', '#FFFFFF']
+      const newWish = await addWish({
+        sender: sender.trim() || 'Tetamu Jemputan',
+        relationship,
+        message: message.trim(),
+        sticker: selectedSticker,
+        photo: photoUrl || null
       });
-    } catch (err) {}
 
-    setIsSubmitted(true);
-    if (onWishSubmitted) {
-      onWishSubmitted(newWish);
+      localStorage.setItem('last_wish_submission_time', now.toString());
+
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#D4AF37', '#F4E0A5', '#8C1C1C', '#FFFFFF']
+        });
+      } catch (err) {}
+
+      setIsSubmitted(true);
+      if (onWishSubmitted) {
+        onWishSubmitted(newWish);
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Ralat semasa menghantar ucapan. Sila cuba lagi.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -71,6 +104,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
     setSender('');
     setMessage('');
     setPhotoUrl('');
+    setErrorMessage('');
     setIsSubmitted(false);
   };
 
@@ -111,6 +145,12 @@ export default function GuestWishForm({ onWishSubmitted }) {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+          {errorMessage && (
+            <div className="p-3 bg-[#8C1C1C]/20 border border-[#8C1C1C] rounded-xl text-xs text-[#FAF0D7] text-center font-sans font-semibold">
+              ⚠️ {errorMessage}
+            </div>
+          )}
+
           {/* Nama Pengirim */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#D4AF37] mb-2 font-typewriter">
@@ -121,6 +161,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
               <input
                 type="text"
                 required
+                maxLength={60}
                 placeholder="Contoh: Cucu Along / Pak Ngah"
                 value={sender}
                 onChange={(e) => setSender(e.target.value)}
@@ -180,6 +221,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
               <MessageSquareQuote className="absolute left-3.5 top-3.5 w-4 h-4 text-[#A89578]" />
               <textarea
                 required
+                maxLength={500}
                 rows={4}
                 placeholder="Tulis ucapan paling manis, memori indah, atau pesanan mesra untuk Tok Wan..."
                 value={message}
@@ -192,7 +234,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
           {/* Muat Naik Foto */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#D4AF37] mb-2 font-typewriter">
-              5. Lampirkan Gambar Bersama Tok Wan (Optional)
+              5. Lampirkan Gambar Bersama Tok Wan (Max 5MB)
             </label>
             <div className="flex items-center gap-4">
               <label className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-[#1A1008] border border-dashed border-[#D4AF37]/40 rounded-xl text-xs text-[#A89578] hover:text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer transition-colors">
@@ -217,10 +259,11 @@ export default function GuestWishForm({ onWishSubmitted }) {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-sm font-heading shadow-xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer uppercase tracking-wider"
+            disabled={isSubmitting}
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-sm font-heading shadow-xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50"
           >
             <Send className="w-4 h-4 fill-current" />
-            Hantar Ucapan Ke Skrin Majlis Tok Wan!
+            {isSubmitting ? 'Menghantar Ucapan...' : 'Hantar Ucapan Ke Skrin Majlis Tok Wan!'}
           </button>
         </form>
       )}

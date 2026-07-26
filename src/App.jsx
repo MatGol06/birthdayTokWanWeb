@@ -6,7 +6,7 @@ import LiveEventPhotos from './components/LiveEventPhotos';
 import AdminDashboard from './components/AdminDashboard';
 import VintageCurtain from './components/VintageCurtain';
 import { getStoredWishes, subscribeToWishes } from './services/wishService';
-import { Tv, PenTool, Image as ImageIcon, Camera, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Tv, PenTool, Image as ImageIcon, Camera, ArrowLeft } from 'lucide-react';
 
 export default function App() {
   const [wishes, setWishes] = useState([]);
@@ -24,6 +24,18 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // SECRET KEYBOARD SHORTCUT: Ctrl + Shift + A to open Admin Dashboard
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setViewMode('admin');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleWishSubmitted = () => {
     setWishes(getStoredWishes());
   };
@@ -34,7 +46,7 @@ export default function App() {
       <div className="film-grain" />
       <div className="vignette-overlay" />
 
-      {/* Top Mobile-Responsive Navigation Bar */}
+      {/* Top Mobile-Responsive Navigation Bar (Hidden Admin Button for Clean Aesthetics) */}
       <nav className="fixed top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 bg-[#1A130E]/95 border border-[#D4AF37]/50 rounded-full p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-md overflow-x-auto max-w-[94vw] scrollbar-none">
         <button
           onClick={() => setViewMode('tv')}
@@ -79,17 +91,6 @@ export default function App() {
         >
           <Camera className="w-3.5 h-3.5" /> Foto Live
         </button>
-
-        <button
-          onClick={() => setViewMode('admin')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold text-[11px] md:text-xs uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
-            viewMode === 'admin'
-              ? 'bg-gradient-to-r from-[#8C1C1C] to-[#5A0D0D] text-[#FAF0D7] shadow-md scale-105 border border-[#D4AF37]'
-              : 'text-[#A89578] hover:text-[#FAF0D7]'
-          }`}
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> Admin
-        </button>
       </nav>
 
       {/* View Switcher */}
@@ -97,6 +98,7 @@ export default function App() {
         <TvDisplayMode
           wishes={wishes}
           onOpenForm={() => setViewMode('form')}
+          onOpenAdmin={() => setViewMode('admin')}
         />
       )}
 

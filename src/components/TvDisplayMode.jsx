@@ -5,13 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GramophonePlayer from './GramophonePlayer';
 import { getEventPhotos } from '../services/wishService';
 
-export default function TvDisplayMode({ wishes, onOpenForm }) {
+export default function TvDisplayMode({ wishes, onOpenForm, onOpenAdmin }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayCategory, setDisplayCategory] = useState('wishes'); // 'wishes' or 'photos'
   const [eventPhotos, setEventPhotos] = useState(getEventPhotos());
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [showQrModal, setShowQrModal] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Secret Triple Click Trigger for Admin
+  const [clickCount, setClickCount] = useState(0);
 
   const targetDate = new Date('2026-08-01T00:00:00');
 
@@ -39,6 +42,23 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
   useEffect(() => {
     setEventPhotos(getEventPhotos());
   }, [wishes]);
+
+  // Reset Triple Click counter after 1.5 seconds
+  useEffect(() => {
+    if (clickCount > 0) {
+      const timer = setTimeout(() => setClickCount(0), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [clickCount]);
+
+  const handleTitleClick = () => {
+    const nextCount = clickCount + 1;
+    setClickCount(nextCount);
+    if (nextCount >= 3) {
+      setClickCount(0);
+      if (onOpenAdmin) onOpenAdmin();
+    }
+  };
 
   const activeItems = displayCategory === 'wishes' ? wishes : eventPhotos;
 
@@ -79,11 +99,14 @@ export default function TvDisplayMode({ wishes, onOpenForm }) {
               <Star className="w-3 h-3 text-[#D4AF37] fill-current" /> PERSEMBAHAN UTAMA <Star className="w-3 h-3 text-[#D4AF37] fill-current" />
             </div>
 
+            {/* SECRET TRIPLE CLICK TITLE TRIGGER */}
             <motion.h1 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black font-cinema tracking-wider text-gold-gradient uppercase animate-gold-shimmer break-words"
+              onClick={handleTitleClick}
+              title="Tekan 3 Kali Untuk Masuk Mod Admin"
+              className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black font-cinema tracking-wider text-gold-gradient uppercase animate-gold-shimmer break-words cursor-pointer select-none"
             >
               TOK WAN HASNUL BIN MANSOR
             </motion.h1>

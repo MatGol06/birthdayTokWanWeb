@@ -1,3 +1,7 @@
+# Security Scan Reports
+*-ZAP-Report-*.json
+*.json.report
+
 # Environment Variables & Secrets
 .env
 .env.*

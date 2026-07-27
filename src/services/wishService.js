@@ -77,12 +77,14 @@ export const addWish = async (wishData) => {
   const sanitizedMsg = sanitizeText(wishData.message, 500);
   const sanitizedSticker = sanitizeText(wishData.sticker || 'SELAMAT HARI JADI', 50);
   const validatedPhoto = validateImageDataUrl(wishData.photo);
+  const validatedPhotos = (wishData.allPhotos || []).map(p => validateImageDataUrl(p)).filter(Boolean);
 
   const newWish = {
     sender: sanitizedSender,
     relationship: sanitizedRel,
     message: sanitizedMsg,
     photo: validatedPhoto,
+    photos: validatedPhotos.length > 0 ? validatedPhotos : (validatedPhoto ? [validatedPhoto] : []),
     sticker: sanitizedSticker,
     timestamp: new Date().toISOString(),
     likes: 0
@@ -202,7 +204,7 @@ export const deleteTokWanMemory = (id) => {
   return updated;
 };
 
-// === LIVE EVENT PHOTOS CRUD ===
+// === LIVE EVENT PHOTOS CRUD (ALBUM SUPPORT) ===
 export const getEventPhotos = () => {
   try {
     const data = localStorage.getItem(STORAGE_PHOTOS_KEY);
@@ -219,12 +221,20 @@ export const getEventPhotos = () => {
 export const addEventPhoto = async (photoData) => {
   const sanitizedUploader = sanitizeText(photoData.uploader || 'Tetamu Majlis', 60);
   const sanitizedCaption = sanitizeText(photoData.caption || 'Koleksi Gambar Majlis Tok Wan', 200);
-  const validatedUrl = validateImageDataUrl(photoData.url);
+  
+  // Support both multi-photo array (urls) and single photo (url)
+  const inputUrls = photoData.urls && Array.isArray(photoData.urls) ? photoData.urls : [photoData.url];
+  const validatedUrls = inputUrls.map(u => validateImageDataUrl(u)).filter(Boolean);
+
+  if (validatedUrls.length === 0) {
+    throw new Error('Sila pilih sekurang-kurangnya 1 gambar yang sah.');
+  }
 
   const newPhoto = {
     uploader: sanitizedUploader,
     caption: sanitizedCaption,
-    url: validatedUrl,
+    url: validatedUrls[0], // Main cover photo
+    urls: validatedUrls,   // Full array of album photos
     timestamp: new Date().toISOString()
   };
 

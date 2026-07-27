@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Image as ImageIcon, Sparkles, Upload, User, CheckCircle2, Film, Download, Eye, X, Plus, Layers } from 'lucide-react';
+import { Camera, Image as ImageIcon, Sparkles, Upload, User, CheckCircle2, Film, Download, Eye, X, Plus, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getEventPhotos, addEventPhoto } from '../services/wishService';
 
@@ -10,7 +10,11 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
   const [selectedPhotos, setSelectedPhotos] = useState([]); // Array of Base64 strings
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activePhoto, setActivePhoto] = useState(null);
+  
+  // Album viewer modal state
+  const [activeAlbum, setActiveAlbum] = useState(null); // The album object
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0); // Selected photo index inside album
+  
   const [errorMessage, setErrorMessage] = useState('');
 
   // MULTI-PHOTO FILE SELECTION HANDLER
@@ -20,7 +24,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
     if (!files || files.length === 0) return;
 
     if (files.length + selectedPhotos.length > 10) {
-      setErrorMessage('Maksimum 10 gambar sahaja dibenarkan dalam satu sesi muat naik.');
+      setErrorMessage('Maksimum 10 gambar sahaja dibenarkan dalam satu album muat naik.');
       return;
     }
 
@@ -50,7 +54,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
     setSelectedPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  // BATCH SUBMIT ALL SELECTED PHOTOS AT ONCE
+  // SUBMIT ALL SELECTED PHOTOS AS A SINGLE ALBUM BOX
   const handleSubmitBatch = async (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -61,15 +65,12 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
       const uploaderName = uploader.trim() || 'Tetamu Majlis';
       const photoCaption = caption.trim() || 'Suasana Majlis Hari Jadi Tok Wan Hasnul';
 
-      // Upload all selected photos sequentially / in batch
-      for (let i = 0; i < selectedPhotos.length; i++) {
-        const photoUrl = selectedPhotos[i];
-        await addEventPhoto({
-          uploader: uploaderName,
-          caption: selectedPhotos.length > 1 ? `${photoCaption} (${i + 1}/${selectedPhotos.length})` : photoCaption,
-          url: photoUrl
-        });
-      }
+      // Save as ONE album record
+      await addEventPhoto({
+        uploader: uploaderName,
+        caption: photoCaption,
+        urls: selectedPhotos
+      });
 
       try {
         confetti({
@@ -96,6 +97,12 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
     }
   };
 
+  // Open album modal
+  const handleOpenAlbum = (album) => {
+    setActiveAlbum(album);
+    setActivePhotoIndex(0);
+  };
+
   // Helper to trigger image file download
   const handleDownloadImage = (url, filename = 'tokwan-foto-majlis.jpg') => {
     const link = document.createElement('a');
@@ -117,7 +124,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
           ALBUM GAMBAR MAJLIS LIVE
         </h2>
         <p className="text-sm md:text-base text-[#FAF0D7] font-heading italic mt-2">
-          Pilih & muat naik pelbagai foto sekali gus tanpa perlu mengulang sesi pemilihan!
+          Himpunan koleksi foto kenangan sambutan Ulang Tahun Ke-64 Tok Wan Hasnul!
         </p>
 
         <div className="mt-6">
@@ -126,7 +133,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-sm font-heading uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
           >
             <Upload className="w-4 h-4" />
-            {showUploadForm ? 'Tutup Borang Upload' : 'Muat Naik Foto Majlis (Pelbagai Gambar)'}
+            {showUploadForm ? 'Tutup Borang Upload' : 'Muat Naik Album Foto (Pelbagai Gambar)'}
           </button>
         </div>
       </div>
@@ -140,11 +147,11 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
           <div className="flex items-center justify-center gap-2 mb-2 text-[#D4AF37]">
             <Layers className="w-5 h-5 animate-pulse" />
             <h3 className="text-xl font-bold font-cinema text-gold-gradient text-center">
-              Upload Gambar
+              Cipta Album Foto Majlis Baharu
             </h3>
           </div>
           <p className="text-xs text-[#A89578] text-center font-typewriter mb-6">
-            Boleh pilih lebih daripada 1 gambar serentak dari galeri telefon anda
+            Pilih pelbagai gambar sekaligus untuk dihimpunkan ke dalam 1 Kad Album tunggal
           </p>
 
           {errorMessage && (
@@ -171,12 +178,12 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
 
             <div>
               <label className="block text-xs font-semibold text-[#D4AF37] uppercase mb-1 font-typewriter">
-                2. Nota / Keterangan Foto
+                2. Tajuk / Keterangan Album
               </label>
               <input
                 type="text"
                 maxLength={200}
-                placeholder="Contoh: Suasana sesi potong kek Tok Wan!"
+                placeholder="Contoh: Sesi potong kek & bergambar bersama Tok Wan"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 className="w-full px-4 py-3 bg-[#1A1008] border border-[#D4AF37]/30 rounded-xl text-[#FAF0D7] placeholder-[#A89578]/50 focus:outline-none focus:border-[#D4AF37] text-sm"
@@ -185,7 +192,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
 
             <div>
               <label className="block text-xs font-semibold text-[#D4AF37] uppercase mb-1 font-typewriter">
-                3. Pilih Gambar (Boleh Pilih Banyak Sekaligus)
+                3. Pilih Gambar Album (Boleh Pilih Banyak Sekaligus)
               </label>
               <label className="flex flex-col items-center justify-center gap-2 py-5 px-4 bg-[#1A1008] border-2 border-dashed border-[#D4AF37]/50 rounded-xl text-sm text-[#A89578] hover:text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer transition-colors text-center">
                 <Camera className="w-6 h-6 text-[#D4AF37]" />
@@ -193,7 +200,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
                   {selectedPhotos.length > 0 ? `Tambah Gambar Lagi (${selectedPhotos.length} Dipilih)` : 'Pilih Gambar Dari Telefon (Boleh Tekan Banyak)'}
                 </span>
                 <span className="text-[10px] text-[#A89578] font-typewriter">
-                  Tekan lama (*long press*) pada gambar di telefon untuk memilih beberapa foto sekaligus.
+                  Semua gambar yang dipilih akan digabungkan ke dalam 1 Kad Album sahaja.
                 </span>
                 <input
                   type="file"
@@ -243,55 +250,72 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
               disabled={selectedPhotos.length === 0 || isSubmitting}
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-sm font-heading uppercase tracking-wider shadow-xl hover:brightness-110 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
-              {isSubmitting ? 'Memuat Naik Foto...' : `Kongsi ${selectedPhotos.length} Foto Ke Skrin Majlis!`}
+              {isSubmitting ? 'Memuat Naik Album...' : `Cipta 1 Album Dengan ${selectedPhotos.length} Foto!`}
             </button>
           </div>
         </form>
       )}
 
-      {/* LIVE EVENT PHOTO GRID OR EMPTY STATE */}
+      {/* LIVE EVENT PHOTO ALBUMS GRID */}
       {photos.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {photos.map((pt) => (
-            <div
-              key={pt.id}
-              className="bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-xl p-3 shadow-xl hover:border-[#D4AF37] transition-all overflow-hidden flex flex-col justify-between group"
-            >
-              <div 
-                className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30 cursor-pointer"
-                onClick={() => setActivePhoto(pt)}
-              >
-                <img
-                  src={pt.url}
-                  alt={pt.caption}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  <span className="p-2 rounded-full bg-black/70 border border-[#D4AF37] text-[#D4AF37]">
-                    <Eye className="w-4 h-4" />
-                  </span>
-                </div>
-              </div>
+          {photos.map((pt) => {
+            const albumPhotos = pt.urls && pt.urls.length > 0 ? pt.urls : [pt.url];
+            const photoCount = albumPhotos.length;
 
-              <div className="px-1">
-                <p className="text-sm font-bold font-heading text-[#FAF0D7] line-clamp-2">
-                  "{pt.caption}"
-                </p>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs text-[#A89578] font-typewriter">
-                  <span>Oleh: <strong className="text-[#D4AF37]">{pt.uploader}</strong></span>
-                  
-                  {/* Download Button */}
-                  <button
-                    onClick={() => handleDownloadImage(pt.url, `tokwan-foto-${pt.uploader}.jpg`)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1A1008] border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors cursor-pointer"
-                    title="Muat Turun Foto"
-                  >
-                    <Download className="w-3 h-3" /> Simpan
-                  </button>
+            return (
+              <div
+                key={pt.id}
+                className="bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-xl p-3 shadow-xl hover:border-[#D4AF37] transition-all overflow-hidden flex flex-col justify-between group"
+              >
+                {/* Cover Image Container */}
+                <div 
+                  className="relative aspect-4/3 rounded-lg overflow-hidden bg-black mb-3 border border-[#D4AF37]/30 cursor-pointer"
+                  onClick={() => handleOpenAlbum(pt)}
+                >
+                  <img
+                    src={pt.url || albumPhotos[0]}
+                    alt={pt.caption}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+
+                  {/* Album Count Badge */}
+                  {photoCount > 1 ? (
+                    <div className="absolute top-2.5 right-2.5 bg-black/85 backdrop-blur-sm border border-[#D4AF37] text-[#D4AF37] text-[10px] font-bold font-typewriter px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+                      <Layers className="w-3 h-3 text-[#D4AF37]" /> {photoCount} FOTO
+                    </div>
+                  ) : (
+                    <div className="absolute top-2.5 right-2.5 bg-black/80 text-[#D4AF37] text-[10px] font-typewriter px-2 py-0.5 rounded border border-[#D4AF37]/30">
+                      1 FOTO
+                    </div>
+                  )}
+
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <span className="px-3 py-1.5 rounded-full bg-black/80 border border-[#D4AF37] text-[#D4AF37] font-bold text-xs font-typewriter flex items-center gap-1.5 shadow-xl">
+                      <Eye className="w-3.5 h-3.5" /> Buka Album ({photoCount})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="px-1">
+                  <p className="text-sm font-bold font-heading text-[#FAF0D7] line-clamp-2">
+                    "{pt.caption}"
+                  </p>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs text-[#A89578] font-typewriter">
+                    <span>Oleh: <strong className="text-[#D4AF37]">{pt.uploader}</strong></span>
+                    
+                    <button
+                      onClick={() => handleOpenAlbum(pt)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1A1008] border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3 h-3" /> Lihat Album
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-16 px-4 bg-[#241A13] border-2 border-[#D4AF37]/40 rounded-2xl max-w-lg mx-auto">
@@ -305,38 +329,92 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
         </div>
       )}
 
-      {/* FULLSCREEN PHOTO PREVIEW & DOWNLOAD MODAL */}
-      {activePhoto && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative max-w-3xl w-full bg-[#241A13] border-2 border-[#D4AF37] rounded-2xl p-6 md:p-8 shadow-[0_0_60px_rgba(212,175,55,0.6)] text-center">
+      {/* RICH ALBUM CAROUSEL MODAL */}
+      {activeAlbum && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="relative max-w-3xl w-full bg-[#241A13] border-2 border-[#D4AF37] rounded-2xl p-4 sm:p-6 shadow-[0_0_60px_rgba(212,175,55,0.6)] text-center flex flex-col max-h-[90vh]">
             <button
-              onClick={() => setActivePhoto(null)}
-              className="absolute top-4 right-4 text-[#A89578] hover:text-white p-2 rounded-full border border-white/10 bg-black/40"
+              onClick={() => setActiveAlbum(null)}
+              className="absolute top-3 right-3 text-[#A89578] hover:text-white p-2 rounded-full border border-white/10 bg-black/40 z-20 cursor-pointer"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
 
-            <div className="relative rounded-xl overflow-hidden mb-4 border border-[#D4AF37]/60 bg-black max-h-[60vh] inline-block">
-              <img
-                src={activePhoto.url}
-                alt={activePhoto.caption}
-                className="max-h-[60vh] w-auto object-contain rounded-lg"
-              />
+            {/* Header / Caption */}
+            <div className="mb-3 pr-8">
+              <h3 className="text-base sm:text-xl font-bold font-heading text-[#FAF0D7] line-clamp-1">
+                "{activeAlbum.caption}"
+              </h3>
+              <p className="text-[11px] sm:text-xs text-[#D4AF37] font-typewriter mt-0.5">
+                ALBUM OLEH: {activeAlbum.uploader} • GAMBAR {activePhotoIndex + 1} DARIPADA {(activeAlbum.urls || [activeAlbum.url]).length}
+              </p>
             </div>
 
-            <h3 className="text-lg md:text-xl font-bold font-heading text-[#FAF0D7] mb-1">
-              "{activePhoto.caption}"
-            </h3>
-            <p className="text-xs text-[#D4AF37] font-typewriter mb-4">
-              DIMUAT NAIK OLEH: {activePhoto.uploader}
-            </p>
+            {/* Main Carousel Image View */}
+            {(() => {
+              const currentUrls = activeAlbum.urls && activeAlbum.urls.length > 0 ? activeAlbum.urls : [activeAlbum.url];
+              const currentImgUrl = currentUrls[activePhotoIndex] || currentUrls[0];
+              const totalImgs = currentUrls.length;
 
-            <button
-              onClick={() => handleDownloadImage(activePhoto.url, `tokwan-foto-${activePhoto.uploader}.jpg`)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-xs uppercase tracking-wider font-heading shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-            >
-              <Download className="w-4 h-4" /> Muat Turun Foto Ini (High Quality)
-            </button>
+              return (
+                <>
+                  <div className="relative flex-1 rounded-xl overflow-hidden bg-black border border-[#D4AF37]/50 flex items-center justify-center max-h-[50vh] my-2">
+                    <img
+                      src={currentImgUrl}
+                      alt={`Foto ${activePhotoIndex + 1}`}
+                      className="max-h-[50vh] w-auto max-w-full object-contain rounded-lg"
+                    />
+
+                    {/* Navigation Buttons for Multi-photo Album */}
+                    {totalImgs > 1 && (
+                      <>
+                        <button
+                          onClick={() => setActivePhotoIndex((prev) => (prev - 1 + totalImgs) % totalImgs)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/75 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-xl"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => setActivePhotoIndex((prev) => (prev + 1) % totalImgs)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/75 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-xl"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Thumbnail Row Selector (If Album Has Multiple Photos) */}
+                  {totalImgs > 1 && (
+                    <div className="flex items-center justify-center gap-2 overflow-x-auto py-2 my-1 max-w-full scrollbar-none">
+                      {currentUrls.map((thumbUrl, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActivePhotoIndex(idx)}
+                          className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
+                            activePhotoIndex === idx
+                              ? 'border-[#D4AF37] scale-105 shadow-[0_0_10px_rgba(212,175,55,0.8)]'
+                              : 'border-white/20 opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          <img src={thumbUrl} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Download Button */}
+                  <div className="mt-2 pt-2 border-t border-white/10">
+                    <button
+                      onClick={() => handleDownloadImage(currentImgUrl, `tokwan-album-${activeAlbum.uploader}-foto-${activePhotoIndex + 1}.jpg`)}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#996515] text-black font-bold text-xs uppercase tracking-wider font-heading shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" /> Muat Turun Foto Ini (Gambar {activePhotoIndex + 1}/{totalImgs})
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

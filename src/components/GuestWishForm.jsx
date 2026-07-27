@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Heart, Camera, CheckCircle2, Film, User, MessageSquareQuote, Users } from 'lucide-react';
+import { Send, Heart, Camera, CheckCircle2, Film, User, MessageSquareQuote, Users, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { addWish } from '../services/wishService';
 
@@ -18,30 +18,45 @@ export default function GuestWishForm({ onWishSubmitted }) {
   const [relationship, setRelationship] = useState(RELATIONSHIPS[0]);
   const [customRelationship, setCustomRelationship] = useState('');
   const [message, setMessage] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photos, setPhotos] = useState([]); // Array of Base64 strings
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleFileChange = (e) => {
+  const handleMultipleFilesChange = (e) => {
     setErrorMessage('');
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+    if (!files || files.length === 0) return;
+
+    if (files.length + photos.length > 5) {
+      setErrorMessage('Maksimum 5 gambar sahaja dibenarkan untuk satu ucapan.');
+      return;
+    }
+
+    const validDataUrls = [];
+    let processedCount = 0;
+
+    files.forEach((file) => {
       if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage('Saiz gambar terlalu besar! Sila pilih gambar di bawah 5MB.');
+        setErrorMessage(`Gambar "${file.name}" melebihi 5MB dan telah diabaikan.`);
         return;
       }
-      if (!file.type.startsWith('image/')) {
-        setErrorMessage('Format fail tidak sah! Sila pilih fail gambar sahaja.');
-        return;
-      }
+      if (!file.type.startsWith('image/')) return;
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoUrl(reader.result);
+        validDataUrls.push(reader.result);
+        processedCount++;
+        if (processedCount === files.length) {
+          setPhotos((prev) => [...prev, ...validDataUrls]);
+        }
       };
       reader.readAsDataURL(file);
-    }
+    });
+  };
+
+  const handleRemovePhoto = (indexToRemove) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleSubmit = async (e) => {
@@ -68,7 +83,8 @@ export default function GuestWishForm({ onWishSubmitted }) {
         sender: sender.trim() || 'Tetamu Jemputan',
         relationship: finalRelationship,
         message: message.trim(),
-        photo: photoUrl || null
+        photo: photos.length > 0 ? photos[0] : null, // Primary photo
+        allPhotos: photos // All attached photos
       });
 
       localStorage.setItem('last_wish_submission_time', now.toString());
@@ -98,7 +114,7 @@ export default function GuestWishForm({ onWishSubmitted }) {
     setRelationship(RELATIONSHIPS[0]);
     setCustomRelationship('');
     setMessage('');
-    setPhotoUrl('');
+    setPhotos([]);
     setErrorMessage('');
     setIsSubmitted(false);
   };
@@ -218,29 +234,43 @@ export default function GuestWishForm({ onWishSubmitted }) {
             </div>
           </div>
 
-          {/* Muat Naik Foto */}
+          {/* Muat Naik Foto (Boleh Banyak Sekaligus) */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#D4AF37] mb-2 font-typewriter">
-              4. Lampirkan Gambar Bersama Tok Wan (Optional, Max 5MB)
+              4. Lampirkan Gambar Bersama Tok Wan (Boleh Pilih Banyak, Max 5MB/Gambar)
             </label>
-            <div className="flex items-center gap-4">
-              <label className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-[#1A1008] border border-dashed border-[#D4AF37]/40 rounded-xl text-xs text-[#A89578] hover:text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer transition-colors">
-                <Camera className="w-4 h-4" />
-                {photoUrl ? 'Tukar Gambar' : 'Pilih Gambar Dari Telefon'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
+            
+            <label className="flex items-center justify-center gap-2 py-3.5 px-4 bg-[#1A1008] border border-dashed border-[#D4AF37]/50 rounded-xl text-xs text-[#A89578] hover:text-[#D4AF37] hover:border-[#D4AF37] cursor-pointer transition-colors text-center">
+              <Camera className="w-4 h-4 text-[#D4AF37]" />
+              <span className="font-semibold text-[#FAF0D7]">
+                {photos.length > 0 ? `Tambah Gambar Lagi (${photos.length} Dipilih)` : 'Pilih Gambar Dari Telefon (Boleh Tekan Banyak)'}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleMultipleFilesChange}
+                className="hidden"
+              />
+            </label>
 
-              {photoUrl && (
-                <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#D4AF37]">
-                  <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
-                </div>
-              )}
-            </div>
+            {/* Preview Selected Photos Grid */}
+            {photos.length > 0 && (
+              <div className="grid grid-cols-5 gap-2 mt-3 p-2 bg-[#1A1008] rounded-xl border border-[#D4AF37]/30">
+                {photos.map((url, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-[#D4AF37]">
+                    <img src={url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(idx)}
+                      className="absolute top-0.5 right-0.5 bg-black/80 text-white rounded-full p-0.5 hover:bg-[#8C1C1C]"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Submit Button */}

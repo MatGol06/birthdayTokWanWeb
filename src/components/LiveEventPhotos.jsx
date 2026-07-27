@@ -140,7 +140,7 @@ export default function LiveEventPhotos({ onPhotoUploaded }) {
           <div className="flex items-center justify-center gap-2 mb-2 text-[#D4AF37]">
             <Layers className="w-5 h-5 animate-pulse" />
             <h3 className="text-xl font-bold font-cinema text-gold-gradient text-center">
-              Muat Naik Pelbagai Foto Sekaligus
+              Upload Gambar
             </h3>
           </div>
           <p className="text-xs text-[#A89578] text-center font-typewriter mb-6">
